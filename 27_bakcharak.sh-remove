@@ -1,0 +1,153 @@
+#!/bin/bash
+
+##  activate the environment for this downstream analysis
+eval "$(conda shell.bash hook)";
+conda activate bakcharak;
+
+
+## create an TSV sample list for downstream processing. Standard tab delimited file. must contain the standard header!
+#  sample\tassembly
+
+## things for running smoothly
+
+export LD_LIBRARY_PATH=/home/wbvr006/miniconda3/pkgs/gsl-2.7-he838d99_0/lib;
+
+rm -rf "$PWD"/27_bakcharak;
+
+mkdir "$PWD"/27_bakcharak;
+
+BAKCHARAK="$PWD"/27_bakcharak;
+
+TSV="$PWD"/samples.tsv;
+
+rm "$TSV";
+
+echo -e "sample\tassembly" > "$TSV";
+
+count0=1;
+countS=$(cat samples.txt | wc -l);
+
+while [ "$count0" -le "$countS" ];do
+
+	SAMPLE=$(cat samples.txt | awk 'NR=='"$count0");
+
+		echo "$SAMPLE";
+
+		echo -e "$SAMPLE\t"$PWD"/genomes/"$SAMPLE"_contigs.fa" >> "$TSV";
+
+	count0=$((count0+1));
+done
+
+##  sample.tsv is created analysis is started
+
+
+scriptdir=/home/wbvr006/GIT/bakcharak;
+
+workdir="$PWD";
+
+
+
+
+
+ls $scriptdir/*.*;
+
+
+BAKTA=/mnt/lely_DB/AMR-Lab/BAKTA/db;
+LOG=./LOGS/27_bakcharak.general.log;
+
+#python "$scriptdir"/bakcharak.py --sample_list "$TSV" --prokka --viz --bakta --bakta_db "$BAKTA" -t 48 --working_directory "$BAKCHARAK" ;
+
+python "$scriptdir"/bakcharak.py --sample_list "$TSV" --viz -t 1 --working_directory "$BAKCHARAK" > "$LOG" 2>&1;
+
+
+
+exit 1
+
+##### bakcharak
+#
+#
+#You are using bakcharak version 3.0.3
+#usage: bakcharak.py [-h] [-l SAMPLE_LIST] [-d WORKING_DIRECTORY] [-c CONFIG] [--species SPECIES] [-s SNAKEFILE] [-v] [--prokka] [--bakta] [--cc]
+#                    [--runname_position RUNNAME_POSITION] [--prokka_genus PROKKA_GENUS] [--bakta_genus BAKTA_GENUS] [--bakta_db BAKTA_DB]
+#                    [--bakta_extra BAKTA_EXTRA] [--minid MINID] [--mincov MINCOV] [--abricate_db ABRICATE_DB]
+#                    [--abricate_duplicationhandling ABRICATE_DUPLICATIONHANDLING] [--vfdb VFDB] [--amrfinder] [--amrfinder_db AMRFINDER_DB]
+#                    [--phenomatch_db PHENOMATCH_DB] [--match_phenotype] [--amrfinder_minid AMRFINDER_MINID] [--amrfinder_mincov AMRFINDER_MINCOV]
+#                    [--amrfinder_duplicationhandling AMRFINDER_DUPLICATIONHANDLING] [--mash_genome_db MASH_GENOME_DB] [--mash_genome_info MASH_GENOME_INFO]
+#                    [--mash_plasmid_db MASH_PLASMID_DB] [--show_bestref] [--plasmidblast_db PLASMIDBLAST_DB] [--platon_db PLATON_DB]
+#                    [--platon_mode PLATON_MODE] [--ani] [--ani_reference ANI_REFERENCE] [-t THREADS] [-n] [--threads_sample THREADS_SAMPLE] [--forceall]
+#                    [--unlock] [--logdir LOGDIR]
+#
+#optional arguments:
+#  -h, --help            show this help message and exit
+#  -l SAMPLE_LIST, --sample_list SAMPLE_LIST
+#                        List of samples to analyze, as a two column tsv file with columns sample and assembly. Can be generated with provided script
+#                        create_sampleSheet,sh
+#  -d WORKING_DIRECTORY, --working_directory WORKING_DIRECTORY
+#                        Working directory where results are saved
+#  -c CONFIG, --config CONFIG
+#                        Path to pre-defined config file (Other parameters will be ignored)
+#  --species SPECIES     Species or genus name (default: "Unspecified Bacteria"). Special analyses are performed when choosing Salmonella, Ecoli, Bacillus,
+#                        Staphylococcus. see also for available amrfinder species with amrfinder -l
+#  -s SNAKEFILE, --snakefile SNAKEFILE
+#                        Path to Snakefile of bakcharak pipeline, default is path to Snakefile in same directory
+#  -v, --viz             Create gene presence/absence plots (skip if processing many files)
+#  --prokka              Also run prokka
+#  --bakta               Also run bakta
+#  --cc                  Infer MLST CC from ST
+#  --runname_position RUNNAME_POSITION
+#                        Position of runname in fasta path. Specify 0 to not export runname. default=0
+#  --prokka_genus PROKKA_GENUS
+#                        Prokka genus option. See prokka --help for details. Default = "Genus"
+#  --bakta_genus BAKTA_GENUS
+#                        Bakta genus option. See bakta --help for details. Default = "Genus"
+#  --bakta_db BAKTA_DB   Path to location of bakta database for annotation; default: /home/wbvr006/GIT/bakcharak/databases/platon
+#  --bakta_extra BAKTA_EXTRA
+#                        Extra, non-standard commands for bakta, e.g. --complete or --compliant. See bakta --help for options. use with care
+#  --minid MINID         Minimum identity in abricate, default=80
+#  --mincov MINCOV       Minimum coverage in abricate, default=50
+#  --abricate_db ABRICATE_DB
+#                        Path to abricate and prokka databases, default is database of conda environment
+#  --abricate_duplicationhandling ABRICATE_DUPLICATIONHANDLING
+#                        How to treat genes that occur more than once. #sum=sum values for each hit, max=value of best hit, first=value of first gene, all=
+#                        add all values seperated by ; (default=max)
+#  --vfdb VFDB           Path to non-standard vfdb for use in abricate; path must contain file "sequences" in abricate format
+#  --amrfinder           Also run amrfinder
+#  --amrfinder_db AMRFINDER_DB
+#                        Path to amrfinder, default is database of conda environment ("path/2/condaenv/share/amrfinderplus/data/latest")
+#  --phenomatch_db PHENOMATCH_DB
+#                        Path to phenomatch_db, default is path/2/repo/databases/phenotypes/phenotype_amrfinder_matchtable_wPhenotypes.tsv
+#  --match_phenotype     Match resfinder phenotype to amrfinder results. Requires a proper phenomatch_db, default=False
+#  --amrfinder_minid AMRFINDER_MINID
+#                        Minimum identity in amrfinder, -1 means use a curated threshold if it exists and 0.9 otherwise (default=-1)
+#  --amrfinder_mincov AMRFINDER_MINCOV
+#                        Minimum coverage in amrfinder (default=0.5)
+#  --amrfinder_duplicationhandling AMRFINDER_DUPLICATIONHANDLING
+#                        How to treat genes that occur more than once. #sum=sum values for each hit, max=value of best hit, first=value of first gene, all=
+#                        add all values seperated by ; (default=max)
+#  --mash_genome_db MASH_GENOME_DB
+#                        Path to mash db (default: path/2/repo/databases/mash/genomes/refseq.genomes.k21s1000.msh)
+#  --mash_genome_info MASH_GENOME_INFO
+#                        Path to mash db (default: path/2/repo/databases/mash/genomes/refseq.genomes.k21s1000.info)
+#  --mash_plasmid_db MASH_PLASMID_DB
+#                        Path to mash db (default: path/2/repo/databases/mash/plasmids/refseq.plasmid.k21s1000.msh)
+#  --show_bestref        Display best mash reference genome in report
+#  --plasmidblast_db PLASMIDBLAST_DB
+#                        Path to location of plasmid blast database: plasmid_db (default: path/2/repo/databases/plasmidblast)
+#  --platon_db PLATON_DB
+#                        Path to location of platon database for plasmid prediction: plasmid_db; default: /home/wbvr006/GIT/bakcharak/databases/platon
+#  --platon_mode PLATON_MODE
+#                        applied filter mode in platon: sensitivity: RDS only (>= 95 % sensitivity); specificity: RDS only (>=99.9 % specificity); accuracy:
+#                        RDS characterization heuristics (highest accuracy) (default: "accuracy")
+#  --ani                 Perform species identification with average nucleotide identity. Requieres specification of ani_reference
+#  --ani_reference ANI_REFERENCE
+#                        Path to ANI reference file. Each line in the file must contain the full path to a reference fasta file
+#  -t THREADS, --threads THREADS
+#                        Number of Threads to use. Note that samples can only be processed sequentially due to the required database access. However the
+#                        allele calling can be executed in parallel for the different loci, default = 10
+#  -n, --dryrun          Snakemake dryrun. Only calculate graph without executing anything
+#  --threads_sample THREADS_SAMPLE
+#                        Number of Threads to use per sample, default = 1
+#  --forceall            Snakemake force. Force recalculation of all steps
+#  --unlock              unlock snakemake
+#  --logdir LOGDIR       Path to directory whete .snakemake output is to be saved
+#
