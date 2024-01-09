@@ -1,2 +1,4 @@
 # WBVR-AMR
-new version WBVR pipeline
+most used scripts for analysis of bacterial isolates better organized.
+
+20240109, Frank
