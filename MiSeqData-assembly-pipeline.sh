@@ -37,20 +37,11 @@ QUAST="$WORKDIR/05_quast_analysis/";                                       # f
 QUASTparse="$WORKDIR/REPORTING/";                                          # g
 MLST="$WORKDIR/06_mlst/";                                                  # h
 MLSTparse="$WORKDIR/REPORTING/";                                           # i
-ABRICATE="$WORKDIR/07_abricate/";										   # j
 PROKKA="$WORKDIR/07a_prokka/";											   # j
-AMRFINDER="$WORKDIR/08_amrfinder/";									 	   # k
 TMP="$WORKDIR/TEMP/";                                                      # l
 GENOMES="$WORKDIR/genomes/";											   # m
 LOG="$WORKDIR/LOGS/";                                                      # n
-STARAMR="$WORKDIR/09_staramr/";											   # s
-RGI="$WORKDIR/10_card-update-analysis/";								   # t
-RESFINDER="$WORKDIR/11_resfinder-analysis/";							   # u
 REPORTING="$WORKDIR/REPORTING/";                                           # r
-SRAX="$WORKDIR/12_sraX-analysis/";										   # o
-MUMI="$WORKDIR/14_mumi-analysis/";							    		   # p
-
-
 ARCHIVE="/mnt/lely_scratch/wbvr006/BACT/2021/";				        			   # q
 
 GenRep="$REPORTING"/general-report.txt;
