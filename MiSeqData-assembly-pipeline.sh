@@ -80,50 +80,49 @@ echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 ./00_structure.sh -w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -c $POLISHED -d $TRIMMEDSTATS -e $SHOVILL -f $QUAST -g $QUASTparse -l $TMP -n $LOG -m $GENOMES; 
 
 # qc of the raw sequencing reads 
-#./01_fastqc.sh -w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -r $REPORTING -q $ARCHIVE
+./01_fastqc.sh -w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -r $REPORTING -q $ARCHIVE
 
 # will trim artefacts from the raw reads
-#./02_polishdata.sh -w $WORKDIR -a $RAW_FASTQ -c $POLISHED -l $TMP -n $LOG -r $REPORTING -v $ADAPTERPATH -x $ADAPTER -q $ARCHIVE
-#./02_polishdata.sh
+./02_polishdata.sh
 
 # qc of the polished rawreads
-#./03_fastqc.sh -w $WORKDIR -c $POLISHED -d $TRIMMEDSTATS -r $REPORTING -q $ARCHIVE
+./03_fastqc.sh -w $WORKDIR -c $POLISHED -d $TRIMMEDSTATS -r $REPORTING -q $ARCHIVE
 
 # assemble the genomes from the individual bacterial isolates
-#./04_shovill.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -y $ASSEMBLER -z $CONTIGLENGTH -r $REPORTING -m $GENOMES -q $ARCHIVE
+./04_shovill.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -y $ASSEMBLER -z $CONTIGLENGTH -r $REPORTING -m $GENOMES -q $ARCHIVE
 
 # qc of the assmbld genomes
-#./05_quast.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -f $QUAST -r $REPORTING -m $GENOMES -q $ARCHIVE
+./05_quast.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -f $QUAST -r $REPORTING -m $GENOMES -q $ARCHIVE
 
 ## QC of the assembled genome, it checks if it's complete. Input will only be the assembled genome
-#./06_busco.sh
+./06_busco.sh
 
 
 
 ##### DTU scripts
 
 # determine the genome size and teh species of the sample output ni the REPORTING directory https://bitbucket.org/genomicepidemiology/kmerfinder/src/master/
-#./11_kmerfinder.sh
+./11_kmerfinder.sh
 
 # analyse reads/contigs for presents of AMR genes with corresponing databases https://bitbucket.org/genomicepidemiology/resfinder/src/master/
-#./12_resfinder.sh
+./12_resfinder.sh
 
 # identifies virulence genes https://bitbucket.org/genomicepidemiology/virulencefinder/src/master/
-#./13_virulencefinder.sh
+./13_virulencefinder.sh
 
 # plasmidfinder with corresponding database https://bitbucket.org/genomicepidemiology/plasmidfinder/src/master/
-#./14_plasmidfinder.sh
+./14_plasmidfinder.sh
 
 # predicts S.aureus spa type with corresponding database https://bitbucket.org/genomicepidemiology/spatyper/src/main/
-#./15_spatyper.sh
+./15_spatyper.sh
 
 # find salmonella pathogen islands with corresponding database https://bitbucket.org/genomicepidemiology/spifinder/src/master/
-#./16_spifinder.sh
+./16_spifinder.sh
 
 # sccmec analysis for MRSA https://bitbucket.org/genomicepidemiology/sccmecfinder/src/master/
-#./17_sccmec.sh
+./17_sccmec.sh
 
-#./18_salmonella-serotyper.sh
+./18_salmonella-serotyper.sh
 
 # mobile element finder phage/virus finder https://github.com/apcamargo/genomad
 ./19_genomad.sh 
@@ -134,60 +133,23 @@ echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 
 ## plasmid analysis
 # another plasmid finder with corresponding database
-#./51_platon-plasmid.sh
+./51_platon-plasmid.sh
 # plasmid analysis and draw maps from analysed data
-#./52_plascad.sh
+./52_plascad.sh
 
 ## anotatie draft genomes
-#./70_prokka.sh
+./70_prokka.sh
 
 ## fast simple clustering
-#./81_mashtree.sh
+./81_mashtree.sh
 
 ## very fast taxonomic indication of isolate
-#./90_sendsketch.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG
-
-
-
-#./23_bakta.sh
-
-#./25_genomad.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG -r $REPORTING -c $POLISHED -q $ARCHIVE 
-
-#./26_deeparg.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG -r $REPORTING -c $POLISHED -u $RESFINDER -q $ARCHIVE
-
-
-
-
-
+./90_sendsketch.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG
 
 ##### optional scripts will run seperate and/or within the complete pipeline at any given moment
-
-
-
-#./99_reporting.sh -w $WORKDIR -n $LOG -l $TMP -r $REPORTING -q $ARCHIVE
-
+./99_reporting.sh
 # all versions of the software used within the whole pipeline are reported in a file within the folder $REPORTING
 #./versions.sh
-
-##  select genomes for analysis to directory "$PWD"/mashtree-bootstrap-Input files must have a *.fa extension
-##  run script within or seperate from this pipelilne
-
-
-#####    OPTIONEEL, kost veel tijd en moet waarde hebben mbt de bact strains die je aan het analyseren bent
-#./107_abricate.sh -w $WORKDIR -m $GENOMES -j $ABRICATE -l $TMP -r $REPORTING -n $LOG -q $ARCHIVE
-#./108_amrfinder.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG -r $REPORTING -k $AMRFINDER -q $ARCHIVE
-
-#./110_card-update-analysis.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG -r $REPORTING -t $RGI -q $ARCHIVE
-#./113_sraX.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG -r $REPORTING -q $ARCHIVE -o $SRAX
-
-
-
-#./150_catpac.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG 
-#./17_resfindergenes-mumi.sh
-#./200_isfinder.sh -w $WORKDIR -m $GENOMES 
-#./22_replicon.sh -w $WORKDIR -m $GENOMES
-#./24_clinker.sh 
-
 
 
 
