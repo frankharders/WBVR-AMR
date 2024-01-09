@@ -64,7 +64,7 @@ OUTr="$PLASMID"/"$SAMPLE"/reads;
 
 	plasmidfinder.py -i "$READSin1" "$READSin2" -o "$OUTr" -p "$DBin" -x ;
 
-count0=$((count0+100));
+count0=$((count0+1));
 done
 
 exit 1

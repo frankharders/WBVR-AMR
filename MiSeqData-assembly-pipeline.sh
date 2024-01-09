@@ -102,31 +102,35 @@ echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 
 ##### DTU scripts
 
-# determine the genome size and teh species of the sample output ni the REPORTING directory
+# determine the genome size and teh species of the sample output ni the REPORTING directory https://bitbucket.org/genomicepidemiology/kmerfinder/src/master/
 #./11_kmerfinder.sh
 
-# analyse reads/contigs for presents of AMR genes with corresponing databases
+# analyse reads/contigs for presents of AMR genes with corresponing databases https://bitbucket.org/genomicepidemiology/resfinder/src/master/
 #./12_resfinder.sh
 
+# identifies virulence genes https://bitbucket.org/genomicepidemiology/virulencefinder/src/master/
 #./13_virulencefinder.sh
 
-# plasmidfinder with corresponding database
+# plasmidfinder with corresponding database https://bitbucket.org/genomicepidemiology/plasmidfinder/src/master/
 #./14_plasmidfinder.sh
 
+# predicts S.aureus spa type with corresponding database https://bitbucket.org/genomicepidemiology/spatyper/src/main/
 #./15_spatyper.sh
 
+# find salmonella pathogen islands with corresponding database https://bitbucket.org/genomicepidemiology/spifinder/src/master/
 #./16_spifinder.sh
 
-# sccmec analysis for MRSA
+# sccmec analysis for MRSA https://bitbucket.org/genomicepidemiology/sccmecfinder/src/master/
 #./17_sccmec.sh
 
-./18_salmonella-serotyper.sh
+#./18_salmonella-serotyper.sh
 
+# mobile element finder phage/virus finder https://github.com/apcamargo/genomad
+./19_genomad.sh 
 
 
 # mlst analysis input is the assembled genome
-#./60_mlst.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -h $MLST -r $REPORTING -q $ARCHIVE
-#./61_mlst_parse.sh -w $WORKDIR -h $MLST -i $MLSTparse -l $TMP -q $ARCHIVE -r $REPORTING
+./60_mlst.sh
 
 ## plasmid analysis
 # another plasmid finder with corresponding database
@@ -135,22 +139,13 @@ echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 #./52_plascad.sh
 
 ## anotatie draft genomes
-#./70_prokka.sh 
-
-
-
-
-
-#./11_staphresfinder.sh -w $WORKDIR -h $MLST -m $GENOMES -l $TMP -n $LOG -r $REPORTING -c $POLISHED -u $RESFINDER -q $ARCHIVE
-
+#./70_prokka.sh
 
 ## fast simple clustering
 #./81_mashtree.sh
 
-
-
 ## very fast taxonomic indication of isolate
-#./90_sendsketch.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG 
+#./90_sendsketch.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG
 
 
 
@@ -167,8 +162,6 @@ echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 
 ##### optional scripts will run seperate and/or within the complete pipeline at any given moment
 
-## QC of the assembled genome, it checks if it's complete. Input will only be the assembled genome
-#./busco.sh
 
 
 #./99_reporting.sh -w $WORKDIR -n $LOG -l $TMP -r $REPORTING -q $ARCHIVE
@@ -183,12 +176,12 @@ echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 #####    OPTIONEEL, kost veel tijd en moet waarde hebben mbt de bact strains die je aan het analyseren bent
 #./107_abricate.sh -w $WORKDIR -m $GENOMES -j $ABRICATE -l $TMP -r $REPORTING -n $LOG -q $ARCHIVE
 #./108_amrfinder.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG -r $REPORTING -k $AMRFINDER -q $ARCHIVE
-#./109_staramr.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG -r $REPORTING -s $STARAMR -q $ARCHIVE 
+
 #./110_card-update-analysis.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG -r $REPORTING -t $RGI -q $ARCHIVE
 #./113_sraX.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG -r $REPORTING -q $ARCHIVE -o $SRAX
 
 
-#./140_mumi.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG -p $MUMI
+
 #./150_catpac.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG 
 #./17_resfindergenes-mumi.sh
 #./200_isfinder.sh -w $WORKDIR -m $GENOMES 
