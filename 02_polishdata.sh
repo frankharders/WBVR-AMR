@@ -28,7 +28,7 @@ FILE=samples.txt;
 KTRIM='r';
 TRIMQ=20;
 QTRIM='rl';
-TARGET=60;
+TARGET=100;
 TIPS=25;
 
 count0=1;
