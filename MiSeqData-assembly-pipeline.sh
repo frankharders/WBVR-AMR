@@ -127,6 +127,8 @@ echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 ./51_platon-plasmid.sh
 # plasmid analysis and draw maps from analysed data
 ./52_plascad.sh
+# mob_suite analysis mob_typer & mob_recon
+./53_mobsuite.sh
 
 ## anotatie draft genomes
 ./70_prokka.sh
