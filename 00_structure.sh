@@ -1,5 +1,10 @@
 #!/bin/bash
 
+##  activate the environment for this downstream analysis
+eval "$(conda shell.bash hook)";
+conda activate pip3;
+
+
 #create several directories
 while getopts "w:a:b:c:d:e:f:g:l:m:n:" opt; do
   case $opt in
@@ -106,9 +111,20 @@ if [ "x" == "x$WORKDIR" ] || [ "x" == "x$RAW_FASTQ" ] || [ "x" == "x$RAWSTATS" ]
     exit 1
 fi
 
+# create a sample.txt file for downstream processing
 
+cd RAWREADS;
+
+rename 's/_S[0-9]*_/_/g' *.gz;
+rename 's/_001././g' *.gz;
+
+ls *R1* | cut -f1 -d'_' > ./../samples.txt;
+
+cd ..;
 ### standard project directories
 
 mkdir -p $RAWSTATS $POLISHED $TRIMMEDSTATS $SHOVILL $QUAST $QUASTparse $TMP $LOG REPORTING $GENOMES;
 
-exit 1
+  exit 1
+
+

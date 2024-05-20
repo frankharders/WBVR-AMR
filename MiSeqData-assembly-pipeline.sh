@@ -64,6 +64,10 @@ samplecnt=$(cat "$SAMPLEFILE" | wc -l);
 
 echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 
+DIR="RAWREADS/"
+if [ -d "$DIR" ]; then
+  ### Take action if $DIR exists ###
+  echo "directory is present"
 
 # go to the root of the project
 
@@ -74,73 +78,73 @@ echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 ./01_fastqc.sh -w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -r $REPORTING -q $ARCHIVE
 
 # will trim artefacts from the raw reads
-./02_polishdata.sh
+#./02_polishdata.sh
 
 # qc of the polished rawreads
-./03_fastqc.sh -w $WORKDIR -c $POLISHED -d $TRIMMEDSTATS -r $REPORTING -q $ARCHIVE
+#./03_fastqc.sh -w $WORKDIR -c $POLISHED -d $TRIMMEDSTATS -r $REPORTING -q $ARCHIVE
 
 # assemble the genomes from the individual bacterial isolates
-./04_shovill.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -y $ASSEMBLER -z $CONTIGLENGTH -r $REPORTING -m $GENOMES -q $ARCHIVE
+#./04_shovill.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -y $ASSEMBLER -z $CONTIGLENGTH -r $REPORTING -m $GENOMES -q $ARCHIVE
 
 # qc of the assmbld genomes
-./05_quast.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -f $QUAST -r $REPORTING -m $GENOMES -q $ARCHIVE
+#./05_quast.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -f $QUAST -r $REPORTING -m $GENOMES -q $ARCHIVE
 
 ## QC of the assembled genome, it checks if it's complete. Input will only be the assembled genome
-./06_busco.sh
+#./06_busco.sh
 
 
 
 ##### DTU scripts
 
 # determine the genome size and teh species of the sample output ni the REPORTING directory https://bitbucket.org/genomicepidemiology/kmerfinder/src/master/
-./11_kmerfinder.sh
+#./11_kmerfinder.sh
 
 # analyse reads/contigs for presents of AMR genes with corresponing databases https://bitbucket.org/genomicepidemiology/resfinder/src/master/
-./12_resfinder.sh
+#./12_resfinder.sh
 
 # identifies virulence genes https://bitbucket.org/genomicepidemiology/virulencefinder/src/master/
-./13_virulencefinder.sh
+#./13_virulencefinder.sh
 
 # plasmidfinder with corresponding database https://bitbucket.org/genomicepidemiology/plasmidfinder/src/master/
-./14_plasmidfinder.sh
+#./14_plasmidfinder.sh
 
 # predicts S.aureus spa type with corresponding database https://bitbucket.org/genomicepidemiology/spatyper/src/main/
-./15_spatyper.sh
+#./15_spatyper.sh
 
 # find salmonella pathogen islands with corresponding database https://bitbucket.org/genomicepidemiology/spifinder/src/master/
-./16_spifinder.sh
+#./16_spifinder.sh
 
 # sccmec analysis for MRSA https://bitbucket.org/genomicepidemiology/sccmecfinder/src/master/
-./17_sccmec.sh
+#./17_sccmec.sh
 
-./18_salmonella-serotyper.sh
+#./18_salmonella-serotyper.sh
 
 # mobile element finder phage/virus finder https://github.com/apcamargo/genomad
-./19_genomad.sh 
+#./19_genomad.sh 
 
 
 # mlst analysis input is the assembled genome
-./60_mlst.sh
+#./60_mlst.sh
 
 ## plasmid analysis
 # another plasmid finder with corresponding database
-./51_platon-plasmid.sh
+#./51_platon-plasmid.sh
 # plasmid analysis and draw maps from analysed data
-./52_plascad.sh
+#./52_plascad.sh
 # mob_suite analysis mob_typer & mob_recon
-./53_mobsuite.sh
+#./53_mobsuite.sh
 
 ## anotatie draft genomes
-./70_prokka.sh
+#./70_prokka.sh
 
 ## fast simple clustering
-./81_mashtree.sh
+#./81_mashtree.sh
 
 ## very fast taxonomic indication of isolate
-./90_sendsketch.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG
+#./90_sendsketch.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG
 
 ##### optional scripts will run seperate and/or within the complete pipeline at any given moment
-./99_reporting.sh
+#./99_reporting.sh
 # all versions of the software used within the whole pipeline are reported in a file within the folder $REPORTING
 #./versions.sh
 
@@ -151,4 +155,12 @@ echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 # LATEN STAAN AMRFINDER ZET ALLE FILES HIER NEER EN DIT LOOPT BIJ ELK GEBRUIK OP!
 rm -rf /tmp/amrfinder*.*;
 
-exit 1
+
+### standard project directories
+
+
+else
+  ###  Control will jump here if $DIR does NOT exists ###
+  echo "Error: ${DIR} not found. Can not continue."
+  exit 1
+fi
