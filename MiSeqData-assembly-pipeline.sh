@@ -64,8 +64,11 @@ samplecnt=$(cat "$SAMPLEFILE" | wc -l);
 
 echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 
+
+filecnt=$(ls ./RAWREADS/ | wc -l)
+
 DIR="RAWREADS/"
-if [ -d "$DIR" ]; then
+if [ -d "$DIR" ] && [ "$filecnt" -gt 0 ]; then
   ### Take action if $DIR exists ###
   echo "directory is present"
 
@@ -161,6 +164,6 @@ rm -rf /tmp/amrfinder*.*;
 
 else
   ###  Control will jump here if $DIR does NOT exists ###
-  echo "Error: ${DIR} not found. Can not continue."
+  echo "Error: ${DIR} can't found or files aren't present in the directory ${DIR}. Scripts can not continue."
   exit 1
 fi
