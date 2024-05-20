@@ -65,7 +65,7 @@ samplecnt=$(cat "$SAMPLEFILE" | wc -l);
 echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 
 
-filecnt=$(ls ./RAWREADS/ | wc -l)
+filecnt=$(ls ./RAWREADS/*R1* | wc -l)
 
 DIR="RAWREADS/"
 if [ -d "$DIR" ] && [ "$filecnt" -gt 0 ]; then
