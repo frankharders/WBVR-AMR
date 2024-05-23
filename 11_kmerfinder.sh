@@ -34,7 +34,7 @@ python "$scriptdir"/kmerfinder.py -i "$FILEin" -db "$DB" -o "$DIRout" -tax "$TAX
 speciesCnt=1;
 #speciesCnt=$(cat "$DIRout"/results.txt | sed '1d' | cut -f19 -d$'\t' | sort -u | wc -l);
 #species=$(cat "$DIRout"/results.txt | sed '1d' | cut -f19 -d$'\t' | sort -u);
-species=$(cat "$DIRout"/results.txt | sed '1d' | cut -f7,19 -d$'\t' | sort -k1,1 -nr | head -n1 | cut -f2 -d$'\t');
+species=$(cat "$DIRout"/results.txt | sed '1d' | cut -f6,19 -d$'\t' | sort -k1,1 -nr | head -n1 | cut -f2 -d$'\t');
 
 
 
