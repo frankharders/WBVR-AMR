@@ -145,6 +145,8 @@ echo -e "\n";
 
 python -m resfinder --nanopore -o "$OUTdirReads"  -l 0.6 -t 0.8  -ifq "$READSin1" "$READSin2" -db_res_kma "$KMAres" -acq --disinfectant -db_disinf_kma "$KMAdis" --point --species "$speciesTemp" --ignore_missing_species -db_point_kma "$KMApoint"/"$speciesTemp"/ -u;
 
+python -m resfinder -v > REPORTING/resfinder.version.log 2>&1;
+
 python -m resfinder --nanopore -o "$OUTdirContigs"  -l 0.6 -t 0.8  -ifa "$CONTIGSin" -db_res_kma "$KMAres" -acq --disinfectant -db_disinf_kma "$KMAdis" --point --species "$speciesTemp" --ignore_missing_species -db_point_kma "$KMApoint"/"$speciesTemp"/ -u;
 
 count0=$((count0+1));
