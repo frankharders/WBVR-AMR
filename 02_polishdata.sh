@@ -8,7 +8,7 @@ LOG=LOGS;
 RAW_FASTQ=RAWREADS;
 POLISHED=02_polished;
 TMP=TEMP;
-ADAPTERPATH="/home/wbvr006/miniconda3/envs/amr-bbmap/opt/bbmap-38.98-1/resources";
+ADAPTERPATH="/home/wbvr006/miniconda3/pkgs/bbmap-39.00-h5c4e2a8_0/opt/bbmap-39.00-0/resources";
 ADAPTER=nextera;
 
 
