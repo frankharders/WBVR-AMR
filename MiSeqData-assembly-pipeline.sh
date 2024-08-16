@@ -75,10 +75,10 @@ if [ -d "$DIR" ] && [ "$filecnt" -gt 0 ]; then
 # go to the root of the project
 
 # sets most of the parameters used for the whoel pipeline
-./00_structure.sh -w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -c $POLISHED -d $TRIMMEDSTATS -e $SHOVILL -f $QUAST -g $QUASTparse -l $TMP -n $LOG -m $GENOMES; 
+#./00_structure.sh -w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -c $POLISHED -d $TRIMMEDSTATS -e $SHOVILL -f $QUAST -g $QUASTparse -l $TMP -n $LOG -m $GENOMES; 
 
 # qc of the raw sequencing reads 
-./01_fastqc.sh -w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -r $REPORTING -q $ARCHIVE
+#./01_fastqc.sh -w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -r $REPORTING -q $ARCHIVE
 
 # will trim artefacts from the raw reads
 #./02_polishdata.sh
@@ -95,6 +95,10 @@ if [ -d "$DIR" ] && [ "$filecnt" -gt 0 ]; then
 ## QC of the assembled genome, it checks if it's complete. Input will only be the assembled genome
 #./06_busco.sh
 
+
+##### ncbi-amrfinderplus
+
+./10_amfinderinderplus.sh
 
 
 ##### DTU scripts
@@ -123,7 +127,7 @@ if [ -d "$DIR" ] && [ "$filecnt" -gt 0 ]; then
 #./18_salmonella-serotyper.sh
 
 # mobile element finder phage/virus finder https://github.com/apcamargo/genomad
-#./19_genomad.sh 
+#./19_genomad.sh
 
 
 # mlst analysis input is the assembled genome
@@ -147,7 +151,7 @@ if [ -d "$DIR" ] && [ "$filecnt" -gt 0 ]; then
 #./90_sendsketch.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG
 
 ##### optional scripts will run seperate and/or within the complete pipeline at any given moment
-#./99_reporting.sh
+./99_reporting.sh
 # all versions of the software used within the whole pipeline are reported in a file within the folder $REPORTING
 #./versions.sh
 
