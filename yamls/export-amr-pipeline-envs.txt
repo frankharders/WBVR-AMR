@@ -1,0 +1,21 @@
+## export conda envs from wbvr006 account on lelycompute-01
+
+all yaml files are stored in this folder
+
+# construct a list of envs present in the directory ~/miniconda3/envs/ which will be exported
+ls -d ~/miniconda3/envs/* | cut -f6 -d'/' > list;
+
+# loop over the line from the file "list" so evry env will be exported to a yaml file which can be used to install the env with the same settings as installed the first time.
+
+while read line;do 
+	conda export -n "$line" > "$line".yaml;
+done < list
+
+
+# replace the corrupted environment, used name as example is EXAMPLE_ENV, replace this by your environment name
+conda remove -n EXAMPLE_ENV --all
+
+# create and install the removed environment
+conda create -n EXAMPLE_ENV -f EXAMPLE_ENV.yaml
+
+frank, 16-08-2024
