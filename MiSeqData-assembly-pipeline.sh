@@ -98,7 +98,7 @@ if [ -d "$DIR" ] && [ "$filecnt" -gt 0 ]; then
 
 ##### ncbi-amrfinderplus
 
-./10_amfinderinderplus.sh
+./10_amfinderplus.sh
 
 
 ##### DTU scripts
