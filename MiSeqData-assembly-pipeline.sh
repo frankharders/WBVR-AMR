@@ -95,6 +95,8 @@ if [ -d "$DIR" ] && [ "$filecnt" -gt 0 ]; then
 ## QC of the assembled genome, it checks if it's complete. Input will only be the assembled genome
 #./06_busco.sh
 
+## QC of the assembled genome, it checks if it's complete. Input will only be the assembled genome
+#./07_checkm2.sh
 
 ##### ncbi-amrfinderplus
 
