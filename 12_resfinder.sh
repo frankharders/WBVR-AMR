@@ -110,7 +110,7 @@ mkdir -p 12_resfinder/"$SAMPLE"/reads;
 READSin1="$POLISHED"/"$SAMPLE"/"$SAMPLE"_R1.QTR.adapter.correct.fq.gz;
 READSin2="$POLISHED"/"$SAMPLE"/"$SAMPLE"_R2.QTR.adapter.correct.fq.gz;
 
-CONTIGSin="$GENOME"/"$SAMPLE"_contigs.fa;
+CONTIGSin="$GENOME"/"$SAMPLE".fa;
 
 OUTdirContigs=12_resfinder/"$SAMPLE"/contigs;
 OUTdirReads=12_resfinder/"$SAMPLE"/reads;
