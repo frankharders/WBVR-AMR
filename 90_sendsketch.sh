@@ -21,7 +21,7 @@ while [ $count0 -le $countS ];do
 
 	SAMPLE=$(cat "$FILE" | awk 'NR=='$count0 );
 
-sketchIn=genomes/"$SAMPLE"_contigs.fa;
+sketchIn=genomes/"$SAMPLE".fa;
 LOG1=LOGS/"$SAMPLE".sendsketch.log;
 
 	sendsketch.sh in="$sketchIn" out="$SEND"/"$SAMPLE".sendsketch.tab outsketch="$SEND"/"$SAMPLE".outsketch.tab ow > "$LOG1" 2>&1;
