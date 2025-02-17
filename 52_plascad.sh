@@ -33,11 +33,11 @@ SAMPLE=$(cat "$FILE" | awk 'NR=='"$count0");
 
 mkdir -p "$PLASMID"/"$SAMPLE";
 
-cp "$GENOME"/"$SAMPLE"'_contigs.fa' "$PLASMID";
+cp "$GENOME"/"$SAMPLE"'.fa' "$PLASMID";
 
 GENOMEin="$PLASMID"/"$SAMPLE".fasta;
 
-mv "$PLASMID"/"$SAMPLE"'_contigs.fa' "$GENOMEin";
+mv "$PLASMID"/"$SAMPLE"'.fa' "$GENOMEin";
 
 	Plascad -i "$GENOMEin" ;
 
