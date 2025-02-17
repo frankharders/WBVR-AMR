@@ -135,7 +135,7 @@ R2=$POLISHED/$SAMPLE/$SAMPLE'_R2.QTR.adapter.correct.fq.gz';
 THREADS=24;
 
 
-FASTAout=$OUTPUTdir/$SAMPLE'_contigs.fa';
+FASTAout=$OUTPUTdir/$SAMPLE'.fa';
 
 quast $FASTAout -1 $R1 -2 $R2 --threads $THREADS -o $QUAST/$SAMPLE --strict-NA;
 
