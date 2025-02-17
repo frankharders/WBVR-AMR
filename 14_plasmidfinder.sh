@@ -55,7 +55,7 @@ mkdir -p "$PLASMID"/"$SAMPLE";
 mkdir -p "$PLASMID"/"$SAMPLE/contigs";
 mkdir -p "$PLASMID"/"$SAMPLE/reads";
 
-GENOMEin="$GENOME"/"$SAMPLE"'_contigs.fa';
+GENOMEin="$GENOME"/"$SAMPLE"'.fa';
 READSin1="$READS"/"$SAMPLE"/"$SAMPLE"'_R1.QTR.adapter.correct.fq.gz';
 READSin2="$READS"/"$SAMPLE"/"$SAMPLE"'_R2.QTR.adapter.correct.fq.gz';
 
