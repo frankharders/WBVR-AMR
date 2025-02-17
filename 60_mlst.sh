@@ -30,7 +30,7 @@ SAMPLE=$(cat "$FILEin" | awk 'NR=='$count0);
 
 INPUTdir="$GENOMES"/;
 
-MLSTin="$GENOMES"/"$SAMPLE"_contigs.fa;
+MLSTin="$GENOMES"/"$SAMPLE".fa;
 MLSTout="$MLST"/"$SAMPLE".mlst.csv;
 
 	mlst "$MLSTin" --quiet --csv --nopath > "$MLSTout";
