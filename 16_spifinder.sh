@@ -40,7 +40,7 @@ while [ $count0 -le $countS ];do
 
 echo "sample=$SAMPLE";
 
-spiInC="$GENOMES"/"$SAMPLE"_contigs.fa;
+spiInC="$GENOMES"/"$SAMPLE".fa;
 mkdir -p 16_spifinder/"$SAMPLE";
 spiOUTC=16_spifinder/"$SAMPLE"/;
 
