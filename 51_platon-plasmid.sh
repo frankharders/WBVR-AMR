@@ -44,7 +44,7 @@ while [ "$count0" -le "$countS" ]; do
 SAMPLE=$(cat samples.txt | awk 'NR=='"$count0");
 	echo -e "$SAMPLE";
 
-GENOMEin="$GENOME"/"$SAMPLE"'_contigs.fa';
+GENOMEin="$GENOME"/"$SAMPLE"'.fa';
 DIRout=51_platon;
 	platon --db "$DBin" --prefix "$SAMPLE" --output "$DIRout" --threads "$NODES" --verbose "$GENOMEin";
 
