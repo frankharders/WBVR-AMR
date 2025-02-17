@@ -36,7 +36,7 @@ mkdir -p "$MOBSUITE"/"$SAMPLE"/mob_recon;
 DIRout="$MOBSUITE"/"$SAMPLE"/mob_recon;
 FILEout="$MOBSUITE"/"$SAMPLE"/"$SAMPLE".mobtyper.txt;
 
-GENOMEin="$GENOME"/"$SAMPLE"_contigs.fa;
+GENOMEin="$GENOME"/"$SAMPLE".fa;
 MGEreport="$MOBSUITE"/"$SAMPLE"/"$SAMPLE".MGE.report.txt;
 
 
