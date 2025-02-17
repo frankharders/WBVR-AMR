@@ -48,7 +48,7 @@ while [ "$count0" -le "$countS" ];do
 			R2=./02_polished/"$SAMPLE"/"$SAMPLE"_R2.QTR.adapter.correct.fq.gz;
 
 ## not possible for assembled genomes
-  seroIn=genomes/"$SAMPLE"_contigs.fa;
+  seroIn=genomes/"$SAMPLE".fa;
 
 	SeqSero2_package.py -p 24 -m a -t 2 -i "$R1" "$R2" -n "$SAMPLE" -d "$seroOUT"/"$SAMPLE";
 
