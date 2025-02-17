@@ -30,7 +30,7 @@ while [ "$count0" -le "$countS" ]; do
 SAMPLE=$(cat "$FILE" | awk 'NR=='"$count0");
 	echo -e "$SAMPLE";
 
-BUSCOin=genomes/"$SAMPLE"_contigs.fa;
+BUSCOin=genomes/"$SAMPLE".fa;
 LOG=LOGS/"$SAMPLE".busco.log;
 
 # output will be here
