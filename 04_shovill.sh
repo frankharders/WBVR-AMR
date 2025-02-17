@@ -136,10 +136,10 @@ R2=$POLISHED/$SAMPLE/$SAMPLE'_R2.QTR.adapter.correct.fq.gz';
 shovill --outdir $OUTPUTdir --depth $DEPTH --minlen $MINlen --mincov $MINcov --keepfiles --assembler $ASSEMBLER --namefmt $SAMPLE'_contig%05d' --force --R1 $R1 --R2 $R2; 
 
 FASTAin=$OUTPUTdir/contigs.fa;
-FASTAout=$OUTPUTdir/$SAMPLE'_contigs.fa';
+FASTAout=$OUTPUTdir/$SAMPLE'.fa';
 
 GFAin=$OUTPUTdir/contigs.gfa;
-GFAout=$OUTPUTdir/$SAMPLE'_contigs.gfa';
+GFAout=$OUTPUTdir/$SAMPLE'.gfa';
 
 ## create a single line fasta file
 
