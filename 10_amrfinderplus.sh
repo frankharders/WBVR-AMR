@@ -44,11 +44,11 @@ Sarg1_2="$Sarg1"_"$Sarg2";
 
 if grep -R "$Sarg1_2" "$S_lst";then
 
-	amrfinder -n genomes/"$name"_contigs.fa -O "$Sarg1_2" --report_common --report_all_equal --ident_min 0.90 --coverage_min 0.60 -o 10_amrfinderplus/"$name"/"$name".amrfinderplus.out --plus --name "$name" --nucleotide_output 10_amrfinderplus/"$name"/"$name".amr.fna --mutation_all 10_amrfinderplus/"$name"/"$name".allmutations.tab --nucleotide_flank5_size 1000 --nucleotide_flank5_output 10_amrfinderplus/"$name"/"$name".amr.flank.fna;
+	amrfinder -n genomes/"$name".fa -O "$Sarg1_2" --report_common --report_all_equal --ident_min 0.90 --coverage_min 0.60 -o 10_amrfinderplus/"$name"/"$name".amrfinderplus.out --plus --name "$name" --nucleotide_output 10_amrfinderplus/"$name"/"$name".amr.fna --mutation_all 10_amrfinderplus/"$name"/"$name".allmutations.tab --nucleotide_flank5_size 1000 --nucleotide_flank5_output 10_amrfinderplus/"$name"/"$name".amr.flank.fna;
 
 elif grep -R "$Sarg1" "$S_lst";then
 
-	amrfinder -n genomes/"$name"_contigs.fa -O "$Sarg1" --report_common --report_all_equal --ident_min 0.90 --coverage_min 0.60 -o 10_amrfinderplus/"$name"/"$name".amrfinderplus.out --plus --name "$name" --nucleotide_output 10_amrfinderplus/"$name"/"$name".amr.fna --mutation_all 10_amrfinderplus/"$name"/"$name".allmutations.tab --nucleotide_flank5_size 1000 --nucleotide_flank5_output 10_amrfinderplus/"$name"/"$name".amr.flank.fna;
+	amrfinder -n genomes/"$name".fa -O "$Sarg1" --report_common --report_all_equal --ident_min 0.90 --coverage_min 0.60 -o 10_amrfinderplus/"$name"/"$name".amrfinderplus.out --plus --name "$name" --nucleotide_output 10_amrfinderplus/"$name"/"$name".amr.fna --mutation_all 10_amrfinderplus/"$name"/"$name".allmutations.tab --nucleotide_flank5_size 1000 --nucleotide_flank5_output 10_amrfinderplus/"$name"/"$name".amr.flank.fna;
 
 fi
 
