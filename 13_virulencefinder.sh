@@ -73,7 +73,7 @@ mkdir -p "$VIRULENCE"/"$SAMPLE"/contigs;
 OUTDIR1="$VIRULENCE"/"$SAMPLE"/reads;
 OUTDIR2="$VIRULENCE"/"$SAMPLE"/contigs;
 
-fastaIn=genomes/"$SAMPLE"_contigs.fa;
+fastaIn=genomes/"$SAMPLE".fa;
 fastqIn1=02_polished/"$SAMPLE"/"$SAMPLE"_R1.QTR.adapter.correct.fq.gz;
 fastqIn2=02_polished/"$SAMPLE"/"$SAMPLE"_R2.QTR.adapter.correct.fq.gz;
 
