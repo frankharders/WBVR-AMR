@@ -51,7 +51,7 @@ mkdir -p "$outputdir"/"$SAMPLE";
 OUTDIR1="$outputdir"/"$SAMPLE";
 
 
-fileIn="$GENOMES"/"$SAMPLE"_contigs.fa;
+fileIn="$GENOMES"/"$SAMPLE".fa;
 
 
 	genomad end-to-end --cleanup --splits 8 "$fileIn" "$OUTDIR1" "$genomadDB";
