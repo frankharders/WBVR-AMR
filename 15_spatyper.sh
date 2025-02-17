@@ -48,7 +48,7 @@ echo "sample=$SAMPLE";
 rm -r "$spaOUT/$SAMPLE";
 mkdir -p "$spaOUT/$SAMPLE";
 
-spaIn="$GENOMES"/"$SAMPLE"_contigs.fa;
+spaIn="$GENOMES"/"$SAMPLE".fa;
 
 	python3 "$scriptdir"/spatyper.py -i "$spaIn" -db "$SPATYPER_DB" -o "$spaOUT"/"$SAMPLE" -no_tmp False;
 
