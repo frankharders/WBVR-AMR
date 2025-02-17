@@ -38,7 +38,7 @@ SAMPLE=$(cat "$FILE" | awk 'NR=='"$count0");
 	echo -e "$SAMPLE";
 
 # Choose the names of the output files
-prokka --outdir "$PROKKA"/"$SAMPLE" --prefix "$SAMPLE" "$GENOMES"/"$SAMPLE"_contigs.fa --cpus "$NODES";
+prokka --outdir "$PROKKA"/"$SAMPLE" --prefix "$SAMPLE" "$GENOMES"/"$SAMPLE".fa --cpus "$NODES";
 
 # Visualize it in Artemis
 #art mydir/mygenome.gff
