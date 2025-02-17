@@ -25,7 +25,7 @@ SAMPLE=$(cat samples.txt | awk 'NR=='$count0);
 
 mkdir -p "$KMER"/"$SAMPLE";
 
-FILEin="$GENOMES"/"$SAMPLE"_contigs.fa;
+FILEin="$GENOMES"/"$SAMPLE".fa;
 DIRout="$KMER"/"$SAMPLE";
 
 
