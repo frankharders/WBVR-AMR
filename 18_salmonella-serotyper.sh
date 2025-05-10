@@ -10,7 +10,7 @@
 
 ##  activate the environment for this downstream analysis
 eval "$(conda shell.bash hook)";
-conda activate amr-seqzero;
+conda activate amr-seqsero2;
 
 count0=1;
 countS=$(cat samples.txt | wc -l);
@@ -50,7 +50,7 @@ while [ "$count0" -le "$countS" ];do
 ## not possible for assembled genomes
   seroIn=genomes/"$SAMPLE".fa;
 
-	SeqSero2_package.py -p 24 -m a -t 2 -i "$R1" "$R2" -n "$SAMPLE" -d "$seroOUT"/"$SAMPLE";
+	~/GIT/SeqSero2/bin/SeqSero2_package.py -p 24 -m a -t 2 -i "$R1" "$R2" -n "$SAMPLE" -d "$seroOUT"/"$SAMPLE";
 
 
 	count0=$((count0+1));
