@@ -19,7 +19,7 @@ CHECKM2=07_checkm2;
 INPUT=genomes/;
 EXT=fa;
 NODES=24;
-DB=/home/wbvr006/home_db/checkm2/CheckM2_database/uniref100.KO.1.dmnd;
+DB=/mnt/lely_DB/COMMUNITY_CONTRIBUTED/taxprofiler_db/checkm/CheckM2_database/uniref100.KO.1.dmnd;
 
 
 checkm2 predict --threads "$NODES" --input "$INPUT" --output-directory "$CHECKM2" --force --database_path "$DB" --allmodels -x "$EXT";
