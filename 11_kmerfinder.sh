@@ -5,8 +5,8 @@ eval "$(conda shell.bash hook)";
 conda activate amr-speciesfinder;
 
 scriptdir=/home/wbvr006/GIT/kmerfinder/;
-DB=/home/wbvr006/home_db/kmerfinder_db/bacteria/bacteria.ATG;
-TAX=/home/wbvr006/home_db/kmerfinder_db/bacteria/bacteria.tax;
+DB=/mnt/lely_DB/COMMUNITY_CONTRIBUTED/kmerfinder/kmerfinder_20200420/bacteria/bacteria.ATG;
+TAX=/mnt/lely_DB/COMMUNITY_CONTRIBUTED/kmerfinder/kmerfinder_20200420/bacteria/bacteria.tax;
 GENOMES="$PWD"/genomes;
 
 speciesLog=REPORTING/SamplesSpecies.log;
