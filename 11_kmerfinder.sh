@@ -1,85 +1,98 @@
 #!/bin/bash
 
-##  activate the environment for this downstream analysis
+## activate the environment for this downstream analysis
 eval "$(conda shell.bash hook)";
 conda activate amr-speciesfinder;
 
-scriptdir=/home/wbvr006/GIT/kmerfinder/;
-DB=/mnt/lely_DB/COMMUNITY_CONTRIBUTED/kmerfinder/kmerfinder_20200420/bacteria/bacteria.ATG;
-TAX=/mnt/lely_DB/COMMUNITY_CONTRIBUTED/kmerfinder/kmerfinder_20200420/bacteria/bacteria.tax;
-GENOMES="$PWD"/genomes;
+# Functie voor logging
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
-speciesLog=REPORTING/SamplesSpecies.log;
+# --- 1. INITIALISATIE & ARGUMENTEN ---
+SAMPLES_FILE="samples.txt"
+WORKDIR="$PWD"
+GENOMES="$PWD/genomes"
+KMER_OUT="$PWD/11_kmerfinder"
+REPORTING="$PWD/REPORTING"
 
-rm "$speciesLog";
-mkdir -p 11_kmerfinder;
+# --- AANGEPASTE PADEN ---
+# We halen de '/' aan het einde weg om dubbele slashes te voorkomen
+scriptdir="/home/wbvr006/GIT/kmerfinder"
+# De exacte naam uit jouw 'ls' output
+SCRIPT_BIN="$scriptdir/kmerfinder_main.py"
 
-KMER=11_kmerfinder;
+DB_BASE="/mnt/lely_DB/COMMUNITY_CONTRIBUTED/kmerfinder/kmerfinder_20200420/bacteria"
+DB="$DB_BASE/bacteria.ATG"
+TAX="$DB_BASE/bacteria.tax"
 
-count0=1
-countW=$(cat samples.txt | wc -l);
-
-while [ $count0 -le $countW ];do
-
-SAMPLE=$(cat samples.txt | awk 'NR=='$count0);
-
-mkdir -p "$KMER"/"$SAMPLE";
-
-FILEin="$GENOMES"/"$SAMPLE".fa;
-DIRout="$KMER"/"$SAMPLE";
-
-
-python "$scriptdir"/kmerfinder.py -i "$FILEin" -db "$DB" -o "$DIRout" -tax "$TAX" -x;
-
-speciesCnt=1;
-#speciesCnt=$(cat "$DIRout"/results.txt | sed '1d' | cut -f19 -d$'\t' | sort -u | wc -l);
-#species=$(cat "$DIRout"/results.txt | sed '1d' | cut -f19 -d$'\t' | sort -u);
-species=$(cat "$DIRout"/results.txt | sed '1d' | cut -f6,19 -d$'\t' | sort -k1,1 -nr | head -n1 | cut -f2 -d$'\t');
-
-
-
-if [ "$speciesCnt" == 1 ];then
-
-echo -e "$SAMPLE\t$species" >> "$speciesLog";
-
-else
-
-echo -e "$SAMPLE\t999" >> "speciesLog";
-
-fi
-
-count0=$((count0+1));
+# Opvangen van vlaggen vanuit de wrapper
+while getopts "w:a:b:c:d:e:f:g:h:i:j:k:l:n:m:r:q:p:" opt; do
+  case $opt in
+     w) WORKDIR="$(readlink -m "$OPTARG")" ;;
+     m) GENOMES="$(readlink -m "$OPTARG")" ;;
+     r) REPORTING="$(readlink -m "$OPTARG")" ;;
+     p) SAMPLES_FILE="$OPTARG" ;;
+     a|b|c|d|e|f|g|h|i|j|k|l|n|q) : ;;
+  esac
 done
 
-exit 1
+mkdir -p "$KMER_OUT" "$REPORTING"
+speciesLog="$REPORTING/SamplesSpecies.log"
+> "$speciesLog"
 
-##### kmerfinder
-#
-#usage: kmerfinder.py [-h] [-i INFILE [INFILE ...]] [-batch BATCH_FILE]
-#                     [-o OUTPUT_FOLDER] [-db DB_PATH] [-db_batch DB_BATCH]
-#                     [-kma KMA_ARGUMENTS] [-tax TAX] [-x] [-kp KMA_PATH] [-q]
-#
-#optional arguments:
-#  -h, --help            show this help message and exit
-#  -i INFILE [INFILE ...], --infile INFILE [INFILE ...]
-#                        FASTA(.gz) or FASTQ(.gz) file(s) to run KmerFinder on.
-#  -batch BATCH_FILE, --batch_file BATCH_FILE
-#                        OPTION NOT AVAILABLE:file with multipe files listed
-#  -o OUTPUT_FOLDER, --output_folder OUTPUT_FOLDER
-#                        folder to store the output
-#  -db DB_PATH, --db_path DB_PATH
-#                        path to database and database file
-#  -db_batch DB_BATCH, --db_batch DB_BATCH
-#                        OPTION NOT AVAILABLE:file with paths to multiple
-#                        databases
-#  -kma KMA_ARGUMENTS, --kma_arguments KMA_ARGUMENTS
-#                        OPTION NOT AVAILABLE:Extra arguments for KMA
-#  -tax TAX, --tax TAX   taxonomy file with additional data for each template
-#                        in all databases (family, taxid and organism)
-#  -x, --extended_output
-#                        Give extented output with taxonomy information
-#  -kp KMA_PATH, --kma_path KMA_PATH
-#                        Path to kma program
-#  -q, --quiet
-#
-######
+count0=1
+countW=$(cat "$SAMPLES_FILE" | wc -l)
+
+log "Start KmerFinder met $SCRIPT_BIN op $countW samples."
+
+# --- 2. DE LOOP ---
+while [ $count0 -le $countW ]; do
+
+    SAMPLE=$(cat "$SAMPLES_FILE" | awk 'NR=='$count0)
+    log "---------------------------------------------------"
+    log "BEZIG MET: $SAMPLE ($count0/$countW)"
+
+    FILEin="$GENOMES/${SAMPLE}.fa"
+    DIRout="$KMER_OUT/$SAMPLE"
+
+    if [ ! -f "$FILEin" ]; then
+        log "SKIP: $SAMPLE - Geen FASTA gevonden in $GENOMES"
+        echo -e "$SAMPLE\tNotFound" >> "$speciesLog"
+        count0=$((count0+1))
+        continue
+    fi
+
+    mkdir -p "$DIRout"
+
+    # Run KmerFinder met de correcte bestandsnaam
+    if [ -f "$SCRIPT_BIN" ]; then
+        python "$SCRIPT_BIN" -i "$FILEin" -db "$DB" -o "$DIRout" -tax "$TAX" -x
+    else
+        log "FOUT: $SCRIPT_BIN niet gevonden! Controleer pad."
+        exit 1
+    fi
+
+    # Parsing resultaten (Top score uit kolom 19)
+    if [ -f "$DIRout/results.txt" ] && [ "$(wc -l < "$DIRout/results.txt")" -gt 1 ]; then
+        species=$(sed '1d' "$DIRout/results.txt" | sort -k1,1nr | head -n1 | cut -f19 -d$'\t')
+        [ -z "$species" ] && species=$(sed '1d' "$DIRout/results.txt" | sort -k1,1nr | head -n1 | cut -f2 -d$'\t')
+
+        echo -e "$SAMPLE\t$species" >> "$speciesLog"
+        log "Resultaat: $species"
+    else
+        echo -e "$SAMPLE\tNoHit" >> "$speciesLog"
+        log "Geen hit gevonden voor $SAMPLE"
+    fi
+
+    sync
+    count0=$((count0+1))
+
+done
+
+# --- 3. AFSLUITING ---
+log "KmerFinder script voltooid."
+
+# Sanitizer
+tr -d '\15\302\240' < "$0" > "$0.tmp" && mv "$0.tmp" "$0"
+chmod +x "$0"
+
+exit 0

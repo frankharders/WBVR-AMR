@@ -1,83 +1,84 @@
 #!/bin/bash
 
-##  activate the environment for this downstream analysis
+## activate the environment for this downstream analysis
 eval "$(conda shell.bash hook)";
 conda activate amr-typing;
 
-cnt=$(cat samples.txt | wc -l);
+# Functie voor logging
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
-## reporting
-GenRep=REPORTING/general-report.txt;
+# --- 1. INITIALISATIE & ARGUMENTEN ---
+SAMPLES_FILE="samples.txt"
+WORKDIR="$PWD"
+GENOMES="$PWD/genomes"
+MLST_OUT="$PWD/60_mlst"
+REPORTING="$PWD/REPORTING"
 
-# (temp) variables
-
-##### MLST typing via https://github.com/tseemann/mlst - Torsten Seemann #####
-
-GENOMES=genomes;
-MLST=60_mlst;
-
-mkdir -p 60_mlst;
-
-
-FILEin=samples.txt;
-
-count0=1;
-countS=$(cat "$FILEin" | wc -l);
-
-while [ $count0 -le $countS ];do
-
-SAMPLE=$(cat "$FILEin" | awk 'NR=='$count0);
-
-INPUTdir="$GENOMES"/;
-
-MLSTin="$GENOMES"/"$SAMPLE".fa;
-MLSTout="$MLST"/"$SAMPLE".mlst.csv;
-
-	mlst "$MLSTin" --quiet --csv --nopath > "$MLSTout";
-
-count0=$((count0+1));
+# Opvangen van vlaggen vanuit de wrapper
+while getopts "w:a:b:c:d:e:f:g:h:i:j:k:l:n:m:r:q:p:" opt; do
+  case $opt in
+     w) WORKDIR="$(readlink -m "$OPTARG")" ;;
+     m) GENOMES="$(readlink -m "$OPTARG")" ;;
+     r) REPORTING="$(readlink -m "$OPTARG")" ;;
+     p) SAMPLES_FILE="$OPTARG" ;;
+     # Overige vlaggen negeren voor wrapper-compatibiliteit
+     a|b|c|d|e|f|g|h|i|j|k|l|n|q) : ;;
+  esac
 done
 
+## Setup mappen
+mkdir -p "$MLST_OUT" "$REPORTING"
+GenRep="$REPORTING/general-report.txt"
+SUMMARY_CSV="$REPORTING/mlst_summary_report.csv"
 
-exit 1
+# Maak de verzamel-CSV leeg
+> "$SUMMARY_CSV"
 
-##### manual MLST calling from assembled genomes
-#
-#SYNOPSIS
-#  Automatic MLST calling from assembled contigs
-#USAGE
-#  % mlst --list                                            # list known schemes
-#  % mlst [options] <contigs.{fasta,gbk,embl}[.gz]          # auto-detect scheme
-#  % mlst --scheme <scheme> <contigs.{fasta,gbk,embl}[.gz]> # force a scheme
-#GENERAL
-#  --help            This help
-#  --version         Print version and exit(default ON)
-#  --check           Just check dependencies and exit (default OFF)
-#  --quiet           Quiet - no stderr output (default OFF)
-#  --threads [N]     Number of BLAST threads (suggest GNU Parallel instead) (default '1')
-#  --debug           Verbose debug output to stderr (default OFF)
-#SCHEME
-#  --scheme [X]      Don't autodetect, force this scheme on all inputs (default '')
-#  --list            List available MLST scheme names (default OFF)
-#  --longlist        List allelles for all MLST schemes (default OFF)
-#  --exclude [X]     Ignore these schemes (comma sep. list) (default 'ecoli_2,abaumannii')
-#OUTPUT
-#  --csv             Output CSV instead of TSV (default OFF)
-#  --json [X]        Also write results to this file in JSON format (default '')
-#  --label [X]       Replace FILE with this name instead (default '')
-#  --nopath          Strip filename paths from FILE column (default OFF)
-#  --novel [X]       Save novel alleles to this FASTA file (default '')
-#  --legacy          Use old legacy output with allele header row (requires --scheme) (default OFF)
-#SCORING
-#  --minid [n.n]     DNA %identity of full allelle to consider 'similar' [~] (default '95')
-#  --mincov [n.n]    DNA %cov to report partial allele at all [?] (default '10')
-#  --minscore [n.n]  Minumum score out of 100 to match a scheme (when auto --scheme) (default '50')
-#PATHS
-#  --blastdb [X]     BLAST database (default '/home/harde004/.conda/envs/POPPUNK/bin/../db/blast/mlst.fa')
-#  --datadir [X]     PubMLST data (default '/home/harde004/.conda/envs/POPPUNK/bin/../db/pubmlst')
-#HOMEPAGE
-#  https://github.com/tseemann/mlst - Torsten Seemann
+count0=1
+countS=$(cat "$SAMPLES_FILE" | wc -l)
 
+log "Start MLST typing op $countS samples."
 
+# --- 2. DE LOOP ---
+while [ $count0 -le $countS ]; do
 
+    SAMPLE=$(cat "$SAMPLES_FILE" | awk 'NR=='$count0)
+    log "---------------------------------------------------"
+    log "BEZIG MET: $SAMPLE ($count0/$countS)"
 
+    # Input: Gebruik .fa extensie (zoals afgesproken in Shovill stap)
+    MLSTin="$GENOMES/${SAMPLE}.fa"
+    MLSTout="$MLST_OUT/${SAMPLE}.mlst.csv"
+
+    if [ ! -f "$MLSTin" ]; then
+        log "SKIP: $SAMPLE - Geen FASTA gevonden in $GENOMES"
+        count0=$((count0+1))
+        continue
+    fi
+
+    # Run mlst (Torsten Seemann)
+    # --nopath zorgt dat alleen de filenaam in de output komt
+    mlst "$MLSTin" --quiet --csv --nopath > "$MLSTout"
+
+    # Voeg resultaat toe aan de verzamel-CSV
+    if [ -s "$MLSTout" ]; then
+        cat "$MLSTout" >> "$SUMMARY_CSV"
+    fi
+
+    sync # NFS stabiliteit
+    count0=$((count0+1))
+
+done
+
+# --- 3. AFSLUITING ---
+log "MLST typing voltooid. Samenvatting staat in $SUMMARY_CSV"
+
+# Update general report
+mlstCnt=$(ls "$MLST_OUT"/*.csv 2>/dev/null | wc -l)
+echo -e "\nMLST Typing\nVan $mlstCnt samples is het Sequence Type (ST) bepaald via PubMLST.\n" >> "$GenRep"
+
+# Sanitizer
+tr -d '\15\302\240' < "$0" > "$0.tmp" && mv "$0.tmp" "$0"
+chmod +x "$0"
+
+exit 0

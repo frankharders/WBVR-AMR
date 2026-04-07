@@ -1,130 +1,69 @@
 #!/bin/bash
 
-##  activate the environment for this downstream analysis
+## activate the environment for this downstream analysis
 eval "$(conda shell.bash hook)";
 conda activate pip3;
 
-
-#create several directories
-while getopts "w:a:b:c:d:e:f:g:l:m:n:" opt; do
+# create several directories
+# Toegevoegd: m: voor GENOMES en r: voor REPORTING in de getopts string
+while getopts "w:a:b:c:d:e:f:g:h:i:j:l:m:n:r:s:t:q:" opt; do
   case $opt in
-    w)
-      #echo "-w was triggered! $OPTARG"
-      WORKDIR="`echo $(readlink -m $OPTARG)`"
-      #echo $WORKDIR
-      ;;
-     a)
-      #echo "-a was triggered! $OPTARG"
-      RAW_FASTQ="`echo $(readlink -m $OPTARG)`"
-      #echo $RAW_FASTQ
-      ;;
-     b)
-      #echo "-b was triggered! $OPTARG"
-      RAWSTATS="`echo $(readlink -m $OPTARG)`"
-      #echo $RAWSTATS
-      ;;
-	 c)
-      #echo "-c was triggered! $OPTARG"
-      POLISHED="`echo $(readlink -m $OPTARG)`"
-      #echo $POLISHED
-      ;;
-	 d)
-      #echo "-d was triggered! $OPTARG"
-      TRIMMEDSTATS="`echo $(readlink -m $OPTARG)`"
-      #echo $TRIMMEDSTATS
-      ;;
-	 e)
-      #echo "-e was triggered! $OPTARG"
-      SHOVILL="`echo $(readlink -m $OPTARG)`"
-      #echo $SHOVILL
-      ;;
-	 f)
-      #echo "-f was triggered! $OPTARG"
-      QUAST="`echo $(readlink -m $OPTARG)`"
-      #echo $QUAST
-      ;;
-	 g)
-      #echo "-g was triggered! $OPTARG"
-      QUASTparse="`echo $(readlink -m $OPTARG)`"
-      #echo $QUASTparse
-      ;;
-     h)
-      #echo "-h was triggered! $OPTARG"
-      MLST="`echo $(readlink -m $OPTARG)`"
-      #echo $MLST
-      ;;
-     i)
-      #echo "-i was triggered! $OPTARG"
-      MLSTparse="`echo $(readlink -m $OPTARG)`"
-      #echo $MLSTparse
-      ;;	  
-     j)
-      #echo "-i was triggered! $OPTARG"
-      ABRICATE="`echo $(readlink -m $OPTARG)`"
-      #echo $ABRICATE
-      ;;
-	 l)
-      #echo "-l was triggered! $OPTARG"
-      TMP="`echo $(readlink -m $OPTARG)`"
-      #echo $TMP
-      ;;
-	 m)
-      #echo "-n was triggered! $OPTARG"
-      GENOMES="`echo $(readlink -m $OPTARG)`"
-      #echo $GENOMES
-      ;;
-	 n)
-      #echo "-n was triggered! $OPTARG"
-      LOG="`echo $(readlink -m $OPTARG)`"
-      #echo $LOG
-      ;;
-     r)
-      #echo "-r was triggered! $OPTARG"
-      REPORTING="`echo $(readlink -m $OPTARG)`"
-      #echo $REPORTING
-      ;;	  
-     s)
-      #echo "-r was triggered! $OPTARG"
-      STARAMR="`echo $(readlink -m $OPTARG)`"
-      #echo $STARAMR
-      ;;
-     t)
-      #echo "-r was triggered! $OPTARG"
-      RGI="`echo $(readlink -m $OPTARG)`"
-      #echo $RGI
-      ;;
-     q)
-      #echo "-r was triggered! $OPTARG"
-      ARCHIVE="`echo $(readlink -m $OPTARG)`"
-      #echo $ARCHIVE
-      ;;	  
-    \?)
-      echo " Let's start some analysis" >&2
-      ;;
-
+    w) WORKDIR="$(readlink -m $OPTARG)" ;;
+    a) RAW_FASTQ="$(readlink -m $OPTARG)" ;;
+    b) RAWSTATS="$(readlink -m $OPTARG)" ;;
+    c) POLISHED="$(readlink -m $OPTARG)" ;;
+    d) TRIMMEDSTATS="$(readlink -m $OPTARG)" ;;
+    e) SHOVILL="$(readlink -m $OPTARG)" ;;
+    f) QUAST="$(readlink -m $OPTARG)" ;;
+    g) QUASTparse="$(readlink -m $OPTARG)" ;;
+    h) MLST="$(readlink -m $OPTARG)" ;;
+    i) MLSTparse="$(readlink -m $OPTARG)" ;;
+    j) ABRICATE="$(readlink -m $OPTARG)" ;;
+    l) TMP="$(readlink -m $OPTARG)" ;;
+    m) GENOMES="$(readlink -m $OPTARG)" ;;
+    n) LOG="$(readlink -m $OPTARG)" ;;
+    r) REPORTING="$(readlink -m $OPTARG)" ;;
+    s) STARAMR="$(readlink -m $OPTARG)" ;;
+    t) RGI="$(readlink -m $OPTARG)" ;;
+    q) ARCHIVE="$(readlink -m $OPTARG)" ;;
+    \?) echo "Invalid option: -$OPTARG" >&2; exit 1 ;;
   esac
 done
 
-if [ "x" == "x$WORKDIR" ] || [ "x" == "x$RAW_FASTQ" ] || [ "x" == "x$RAWSTATS" ]  || [ "x" == "x$POLISHED" ]  || [ "x" == "x$TRIMMEDSTATS" ] ; then
-    echo "-w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -c $POLISHED -d $TRIMMEDSTATS -e $SHOVILL -f QUAST -g $QUASTparse -h $MLST -i $MLSTparse -l $TMP -n $LOG -r $REPORTING"
-    echo "-w, -a, -b, -c, -d, -e, -f, -g, -h, -i, -l, -n, -r  [options] are required"
+# Validatie: Controleer of de belangrijkste variabelen gevuld zijn
+if [ -z "$WORKDIR" ] || [ -z "$RAW_FASTQ" ] || [ -z "$RAWSTATS" ]; then
+    echo "Usage: $0 -w WORKDIR -a RAW_FASTQ -b RAWSTATS -c POLISHED -d TRIMMEDSTATS [and other options]"
     exit 1
 fi
 
-# create a sample.txt file for downstream processing
+# 1. Ga naar de RAWREADS map voor hernoeming en sample-lijst generatie
+if [ -d "RAWREADS" ]; then
+    cd RAWREADS || exit 1
+    
+    # Hernoem MiSeq bestanden naar een simpeler formaat
+    # Verwijdert _S123_ en _001
+    rename 's/_S[0-9]+_/_/g' *.gz 2>/dev/null
+    rename 's/_001\././g' *.gz 2>/dev/null
 
-cd RAWREADS;
+    # Maak de samples.txt aan (pakt alles voor de eerste underscore)
+    ls *R1* 2>/dev/null | cut -f1 -d'_' > ../samples.txt
+    
+    cd ..
+else
+    echo "Error: RAWREADS directory niet gevonden!"
+    exit 1
+fi
 
-rename 's/_S[0-9]*_/_/g' *.gz;
-rename 's/_001././g' *.gz;
+# 2. Mappen aanmaken
+# We gebruiken de variabelen die via getopts zijn binnengekomen
+echo "Creating directory structure..."
 
-ls *R1* | cut -f1 -d'_' > ./../samples.txt;
+mkdir -p "$RAWSTATS" "$POLISHED" "$TRIMMEDSTATS" "$SHOVILL" "$QUAST" "$QUASTparse" "$TMP" "$LOG" "$REPORTING" "$GENOMES" "$MLST";
 
-cd ..;
-### standard project directories
+# Optionele extra mappen als de variabelen gezet zijn
+[ -n "$ABRICATE" ] && mkdir -p "$ABRICATE"
+[ -n "$STARAMR" ] && mkdir -p "$STARAMR"
+[ -n "$RGI" ] && mkdir -p "$RGI"
 
-mkdir -p $RAWSTATS $POLISHED $TRIMMEDSTATS $SHOVILL $QUAST $QUASTparse $TMP $LOG REPORTING $GENOMES;
-
-  exit 1
-
-
+echo "Structure generation complete."
+exit 0

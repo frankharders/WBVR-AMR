@@ -1,112 +1,96 @@
 #!/bin/bash
 
-##  activate the environment for this downstream analysis
+## activate the environment for this downstream analysis
 eval "$(conda shell.bash hook)";
 conda activate amr-busco;
 
-## change 2404-01-05
-## added script to pipeline for QC purposes assembled genomes
-## end
+# Functie voor logging naar terminal
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
-## sample file
-FILE=samples.txt;
+# --- 1. INITIALISATIE & GETOPTS ---
+FILE="samples.txt";
+WORKDIR="$PWD";
+GENOMES="$PWD/genomes";
+BUSCO_OUT="$PWD/06_busco";
+LOGDIR="$PWD/LOGS";
+REPORTING="$PWD/REPORTING";
+
+# Opvangen van vlaggen vanuit de wrapper
+while getopts "w:a:b:c:d:e:f:g:h:i:j:k:l:n:m:r:q:p:" opt; do
+  case $opt in
+     w) WORKDIR="$(readlink -m "$OPTARG")" ;;
+     m) GENOMES="$(readlink -m "$OPTARG")" ;; # De genomes folder met .fa files
+     r) REPORTING="$(readlink -m "$OPTARG")" ;;
+     p) FILE="$OPTARG" ;;
+     # Overige vlaggen negeren
+     a|b|c|d|e|f|g|h|i|j|k|l|n|q) : ;;
+  esac
+done
 
 ## reporting
-GenRep="$REPORTING"/general-report.txt;
-ToDay=$(date +%Y-%m-%d-%T);
+GenRep="$REPORTING/general-report.txt";
+mkdir -p "$BUSCO_OUT" "$LOGDIR";
 
-# create directory for output
-mkdir -p 06_busco;
-
-BUSCO=06_busco;
-MODE=geno;
+MODE="geno";
 NODES=24;
 
 count0=1;
 countS=$(cat "$FILE" | wc -l);
 
+log "Start BUSCO analyse op geassembleerde genomen. Totaal: $countS samples."
+
+# --- 2. DE LOOP ---
 while [ "$count0" -le "$countS" ]; do 
 
-SAMPLE=$(cat "$FILE" | awk 'NR=='"$count0");
-	echo -e "$SAMPLE";
+    SAMPLE=$(cat "$FILE" | awk 'NR=='"$count0");
+    log "---------------------------------------------------"
+    log "BEZIG MET: $SAMPLE ($count0/$countS)"
 
-BUSCOin=genomes/"$SAMPLE".fa;
-LOG=LOGS/"$SAMPLE".busco.log;
+    # Pad naar de input FASTA (let op de extensie uit stap 04/05)
+    BUSCOin="$GENOMES/${SAMPLE}_contigs.fa";
+    
+    # Als de bovenstaande naam niet matcht met je schijf, probeer deze fallback:
+    if [ ! -f "$BUSCOin" ]; then
+        BUSCOin="$GENOMES/${SAMPLE}.fa";
+    fi
 
-# output will be here
-mkdir -p "$BUSCO"/"$SAMPLE"/;
-BUSCOdir="$BUSCO"/"$SAMPLE"/;
+    if [ ! -f "$BUSCOin" ]; then
+        log "SKIP: $SAMPLE - Geen FASTA gevonden in $GENOMES"
+        count0=$((count0+1))
+        continue
+    fi
 
-	busco --in "$BUSCOin" --out "$BUSCOdir" --mode "$MODE" --auto-lineage-prok --cpu "$NODES" --scaffold_composition --force > "$LOG" 2>&1;
+    BUSCOlog="$LOGDIR/${SAMPLE}.busco.log";
+    
+    # BUSCO maakt zelf de output folder aan met de naam die je geeft bij --out
+    # Om vervuiling te voorkomen draaien we BUSCO binnen de 06_busco hoofdmap
+    cd "$BUSCO_OUT" || exit
 
-count0=$((count0+1));
+    log "Draaien BUSCO voor $SAMPLE..."
+    busco --in "$BUSCOin" \
+          --out "$SAMPLE" \
+          --mode "$MODE" \
+          --auto-lineage-prok \
+          --cpu "$NODES" \
+          --scaffold_composition \
+          --force > "$BUSCOlog" 2>&1;
+
+    sync # Voorkom NFS stalls na de intensieve BUSCO run
+    
+    cd "$WORKDIR" || exit
+    
+    count0=$((count0+1));
+    log "Sample $SAMPLE klaar. Volgende..."
 done
 
+# --- 3. AFSLUITING ---
 rm -rf busco_downloads;
 
+log "BUSCO analyse voltooid."
+echo -e "\nBUSCO\nDe kwaliteit van de genomen is gecontroleerd met BUSCO (prokaryote tree).\n" >> "$GenRep";
 
-exit 1
+# Sanitizer
+tr -d '\15\302\240' < "$0" > "$0.tmp" && mv "$0.tmp" "$0"
+chmod +x "$0"
 
-
-##### busco
-#
-#
-#usage: busco -i [SEQUENCE_FILE] -l [LINEAGE] -o [OUTPUT_NAME] -m [MODE] [OTHER OPTIONS]
-#
-#Welcome to BUSCO 5.5.0: the Benchmarking Universal Single-Copy Ortholog assessment tool.
-#For more detailed usage information, please review the README file provided with this distribution and the BUSCO user guide. Visit this page https://gitlab.com/ezlab/busco#how-to-cite-busco to see how to cite BUSCO
-#
-#optional arguments:
-#  -i SEQUENCE_FILE, --in SEQUENCE_FILE
-#                        Input sequence file in FASTA format. Can be an assembled genome or transcriptome (DNA), or protein sequences from an annotated gene set. Also possible to use a path to a directory containing multiple input files.
-#  -o OUTPUT, --out OUTPUT
-#                        Give your analysis run a recognisable short name. Output folders and files will be labelled with this name. The path to the output folder is set with --out_path.
-#  -m MODE, --mode MODE  Specify which BUSCO analysis mode to run.
-#                        There are three valid modes:
-#                        - geno or genome, for genome assemblies (DNA)
-#                        - tran or transcriptome, for transcriptome assemblies (DNA)
-#                        - prot or proteins, for annotated gene sets (protein)
-#  -l LINEAGE, --lineage_dataset LINEAGE
-#                        Specify the name of the BUSCO lineage to be used.
-#  --augustus            Use augustus gene predictor for eukaryote runs
-#  --augustus_parameters --PARAM1=VALUE1,--PARAM2=VALUE2
-#                        Pass additional arguments to Augustus. All arguments should be contained within a single string with no white space, with each argument separated by a comma.
-#  --augustus_species AUGUSTUS_SPECIES
-#                        Specify a species for Augustus training.
-#  --auto-lineage        Run auto-lineage to find optimum lineage path
-#  --auto-lineage-euk    Run auto-placement just on eukaryote tree to find optimum lineage path
-#  --auto-lineage-prok   Run auto-lineage just on non-eukaryote trees to find optimum lineage path
-#  -c N, --cpu N         Specify the number (N=integer) of threads/cores to use.
-#  --config CONFIG_FILE  Provide a config file
-#  --contig_break n      Number of contiguous Ns to signify a break between contigs. Default is n=10.
-#  --datasets_version DATASETS_VERSION
-#                        Specify the version of BUSCO datasets, e.g. odb10
-#  --download [dataset [dataset ...]]
-#                        Download dataset. Possible values are a specific dataset name, "all", "prokaryota", "eukaryota", or "virus". If used together with other command line arguments, make sure to place this last.
-#  --download_base_url DOWNLOAD_BASE_URL
-#                        Set the url to the remote BUSCO dataset location
-#  --download_path DOWNLOAD_PATH
-#                        Specify local filepath for storing BUSCO dataset downloads
-#  -e N, --evalue N      E-value cutoff for BLAST searches. Allowed formats, 0.001 or 1e-03 (Default: 1e-03)
-#  -f, --force           Force rewriting of existing files. Must be used when output files with the provided name already exist.
-#  -h, --help            Show this help message and exit
-#  --limit N             How many candidate regions (contig or transcript) to consider per BUSCO (default: 3)
-#  --list-datasets       Print the list of available BUSCO datasets
-#  --long                Optimization Augustus self-training mode (Default: Off); adds considerably to the run time, but can improve results for some non-model organisms
-#  --metaeuk_parameters "--PARAM1=VALUE1,--PARAM2=VALUE2"
-#                        Pass additional arguments to Metaeuk for the first run. All arguments should be contained within a single string with no white space, with each argument separated by a comma.
-#  --metaeuk_rerun_parameters "--PARAM1=VALUE1,--PARAM2=VALUE2"
-#                        Pass additional arguments to Metaeuk for the second run. All arguments should be contained within a single string with no white space, with each argument separated by a comma.
-#  --miniprot            Use miniprot gene predictor for eukaryote runs
-#  --offline             To indicate that BUSCO cannot attempt to download files
-#  --out_path OUTPUT_PATH
-#                        Optional location for results folder, excluding results folder name. Default is current working directory.
-#  -q, --quiet           Disable the info logs, displays only errors
-#  -r, --restart         Continue a run that had already partially completed.
-#  --scaffold_composition
-#                        Writes ACGTN content per scaffold to a file scaffold_composition.txt
-#  --tar                 Compress some subdirectories with many files to save space
-#  --update-data         Download and replace with last versions all lineages datasets and files necessary to their automated selection
-#  -v, --version         Show this version and exit
-#
-#
+exit 0

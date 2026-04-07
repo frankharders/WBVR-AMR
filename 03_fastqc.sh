@@ -1,142 +1,96 @@
 #!/bin/bash
 
-##  activate the environment for this downstream analysis
+## activate the environment for this downstream analysis
 eval "$(conda shell.bash hook)";
-conda activate amr-QC;                   
+conda activate amr-QC;                       
 
+# Functie voor logging
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
-cnt=$(cat samples.txt | wc -l);
+# --- 1. INITIALISATIE ---
+SAMPLES_FILE="samples.txt"
+WORKDIR="$PWD"
+POLISHED="$PWD/02_polished"
+TRIMMEDSTATS="$PWD/03_trimmedstats"
+REPORTING="$PWD/REPORTING"
+ARCHIVE=""
 
-while getopts "w:c:d:r:q:" opt; do
-  case $opt in
-     w)
-      echo "-w was triggered! $OPTARG"
-      WORKDIR="`echo $(readlink -m $OPTARG)`"
-      echo $WORKDIR
-      ;;
-     a)
-      echo "-a was triggered! $OPTARG"
-      RAW_FASTQ="`echo $(readlink -m $OPTARG)`"
-      echo $RAW_FASTQ
-      ;;
-     b)
-      echo "-b was triggered! $OPTARG"
-      RAWSTATS="`echo $(readlink -m $OPTARG)`"
-      echo $RAWSTATS
-      ;;
-	 c)
-      echo "-c was triggered! $OPTARG"
-      POLISHED="`echo $(readlink -m $OPTARG)`"
-      echo $POLISHED
-      ;;
-	 d)
-      echo "-d was triggered! $OPTARG"
-      TRIMMEDSTATS="`echo $(readlink -m $OPTARG)`"
-      echo $TRIMMEDSTATS
-      ;;
-	 e)
-      echo "-e was triggered! $OPTARG"
-      SHOVILL="`echo $(readlink -m $OPTARG)`"
-      echo $SHOVILL
-      ;;
-	 f)
-      echo "-f was triggered! $OPTARG"
-      QUAST="`echo $(readlink -m $OPTARG)`"
-      echo $QUAST
-      ;;
-	 g)
-      echo "-g was triggered! $OPTARG"
-      QUASTparse="`echo $(readlink -m $OPTARG)`"
-      echo $QUASTparse
-      ;;
-     h)
-      echo "-h was triggered! $OPTARG"
-      MLST="`echo $(readlink -m $OPTARG)`"
-      echo $MLST
-      ;;
-     i)
-      echo "-i was triggered! $OPTARG"
-      MLSTparse="`echo $(readlink -m $OPTARG)`"
-      echo $MLSTparse
-      ;;	  
-	 j)
-      echo "-j was triggered! $OPTARG"
-      ABRICATE="`echo $(readlink -m $OPTARG)`"
-      echo $ABRICATE
-      ;;
-     k)
-      echo "-k was triggered! $OPTARG"
-      ABRICATEparse="`echo $(readlink -m $OPTARG)`"
-      echo $ABRICATEparse
-      ;;	  
-	 l)
-      echo "-l was triggered! $OPTARG"
-      TMP="`echo $(readlink -m $OPTARG)`"
-      echo $TMP
-      ;;	  
-	 n)
-      echo "-n was triggered! $OPTARG"
-      LOG="`echo $(readlink -m $OPTARG)`"
-      echo $LOG
-      ;;
-     r)
-      echo "-r was triggered! $OPTARG"
-      REPORTING="`echo $(readlink -m $OPTARG)`"
-      echo $REPORTING
-      ;;
-     q)
-      echo "-r was triggered! $OPTARG"
-      ARCHIVE="`echo $(readlink -m $OPTARG)`"
-      echo $ARCHIVE
-      ;;
-	\?)
-      echo "-i for the folder containing fastq files, -o for output folder of polished data: -$OPTARG" >&2
-      ;;
-  esac
-done
-
-if [ "x" == "x$WORKDIR" ] || [ "x" == "x$POLISHED" ] || [ "x" == "x$TRIMMEDSTATS" ] || [ "x" == "x$REPORTING" ]; then
-    echo "-w $WORKDIR -c $POLISHED -d $TRIMMEDSTATS -r $REPORTING"
-    echo "-w, -c, -d, -w [options] are required"
+if [ ! -f "$SAMPLES_FILE" ]; then
+    echo "Error: $SAMPLES_FILE niet gevonden!"
     exit 1
 fi
 
+cnt=$(cat "$SAMPLES_FILE" | wc -l);
+
+# --- 2. ARGUMENTEN PARSEN (Uitgebreid voor wrapper-compatibiliteit) ---
+while getopts "w:a:b:c:d:e:f:g:h:i:j:k:l:n:r:q:p:" opt; do
+  case $opt in
+     w) WORKDIR="$(readlink -m "$OPTARG")" ;;
+     c) POLISHED="$(readlink -m "$OPTARG")" ;;
+     d) TRIMMEDSTATS="$(readlink -m "$OPTARG")" ;;
+     r) REPORTING="$(readlink -m "$OPTARG")" ;;
+     q) ARCHIVE="$(readlink -m "$OPTARG")" ;;
+     p) SAMPLES_FILE="$OPTARG" ;;
+     # Overige vlaggen opvangen maar negeren om fouten te voorkomen
+     a|b|e|f|g|h|i|j|k|l|n) : ;; 
+     \?) echo "Ongeldige optie: -$OPTARG" >&2; exit 1 ;;
+  esac
+done
+
+# Check op minimale vereisten
+if [ -z "$WORKDIR" ] || [ -z "$POLISHED" ] || [ -z "$TRIMMEDSTATS" ] || [ -z "$REPORTING" ]; then
+    echo "Fout: -w, -c, -d en -r zijn verplicht."
+    exit 1
+fi
 
 ## reporting
-GenRep="$REPORTING"/general-report.txt;
+GenRep="$REPORTING/general-report.txt";
+mkdir -p "$TRIMMEDSTATS"
 
+log "Start FastQC op polished reads. Totaal aantal samples: $cnt"
 
-while read SAMPLE; do 
+# --- 3. DE LOOP ---
+while read -r SAMPLE || [[ -n "$SAMPLE" ]]; do 
+    [[ -z "${SAMPLE// }" ]] && continue
 
-R1=$POLISHED/$SAMPLE/$SAMPLE'_R1.QTR.adapter.correct.fq.gz';
-R2=$POLISHED/$SAMPLE/$SAMPLE'_R2.QTR.adapter.correct.fq.gz';
+    log "---------------------------------------------------"
+    log "BEZIG MET: $SAMPLE"
 
-OUTdir=$TRIMMEDSTATS/$SAMPLE;
+    R1="$POLISHED/$SAMPLE/${SAMPLE}_R1.QTR.adapter.correct.fq.gz"
+    R2="$POLISHED/$SAMPLE/${SAMPLE}_R2.QTR.adapter.correct.fq.gz"
+    OUTdir="$TRIMMEDSTATS/$SAMPLE"
 
-mkdir -p $OUTdir;
+    if [[ ! -f "$R1" ]]; then
+        log "SKIP: $SAMPLE - R1 niet gevonden in $POLISHED"
+        ((cnt--))
+        continue
+    fi
 
+    mkdir -p "$OUTdir"
 
-echo "fastQC analysis on raw sequence files";
-fastqc -t 8 -o $OUTdir $R1 $R2;
+    log "FastQC analyse op: $SAMPLE"
+    # -t 8 voor snelheid, </dev/null om loop-stalls te voorkomen
+    fastqc -t 8 -o "$OUTdir" "$R1" "$R2" </dev/null
 
+    ((cnt--))
+    log "$cnt samples te gaan!"
 
-	let cnt--;	
-	echo -e "$cnt samples to go!";
-	echo "NEXT";
+done < "$SAMPLES_FILE"
 
+# --- 4. AFSLUITING EN ARCHIVERING ---
 
-		done < samples.txt
+fastQCcnt=$(ls "$TRIMMEDSTATS"/*/*R1*.zip 2>/dev/null | wc -l)
 
-fastQCcnt=$(ls $TRIMMEDSTATS/*/*R1*.zip | wc -l);
+echo -e "\nfastQC\nVan $fastQCcnt samples is een FastQC rapport gegenereerd op basis van polished reads.\n" >> "$GenRep"
 
-echo -e "\nfastQC\nfrom $fastQCcnt samples a fastqQC report is constructed from polished reads\n" >> "$GenRep"; 		
-	
+log "FastQC plots zijn gegenereerd in $TRIMMEDSTATS"
 
-echo "fastqc plots are generated for all polished reads for all samples";
-echo -e "output files for downstream processing can be found in the directory $TRIMMEDSTATS";
+# Gebruik rsync in plaats van cp om stalls op de archiefschijf te voorkomen
+if [ -n "$ARCHIVE" ]; then
+    log "Archiveren naar $ARCHIVE..."
+    mkdir -p "$ARCHIVE"
+    rsync -av --quiet "$TRIMMEDSTATS" "$ARCHIVE/" && sync
+    log "Archivering voltooid."
+fi
 
-cp -r $TRIMMEDSTATS $ARCHIVE;
-
-	
-exit 1
-
+exit 0

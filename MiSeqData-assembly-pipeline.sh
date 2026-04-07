@@ -1,175 +1,143 @@
 #!/bin/bash
 
 ## info
-
 ## 20240105 change
 ## change adapterpath to the adapters within the conda env used
 ## tidy up
+## 20260402: Samengevoegde versie met alle tools en verbeterde foutafhandeling
 ## end
 
-
-# Dependencies:
-#   fastqc, SHOVILL
-#export
-
-## Data organisation
-## create data structure in directories
-## MiSeq data is different in raw seq data as genomescan data
-## This wrapper is ONLY for MiSeq data.
-## MiSeq data name structure "[SAMPLENAME]_S[NUMBER]_R[1,2]_[001 or empty].fastq.gz"
-## This structure can be simplified to "[SAMPLENAME]_R[1,2].fastq.gz" for easy use
+# Dependencies: fastqc, SHOVILL, etc.
 
 ### manual input of some info regarding working directories
-
-ADAPTERPATH="/home/wbvr006/miniconda3/envs/amr-bbmap/opt/bbmap-38.98-1/resources";              # v
-ADAPTER="nextera";							                               # x         # options: nextera Rubicon TAKARA truseq scriptseqv2
-ASSEMBLER="spades";                                                        # y         #options: velvet megahit skesa spades
-CONTIGLENGTH=300;                                                          # z
+ADAPTERPATH="/home/wbvr006/miniconda3/envs/amr-bbmap/opt/bbmap-38.98-1/resources"; # v
+ADAPTER="nextera";                                                              # x
+ASSEMBLER="spades";                                                             # y
+CONTIGLENGTH=300;                                                               # z
 
 ### standard output directories
-WORKDIR="$PWD";									                           # w
-RAW_FASTQ="$WORKDIR/RAWREADS/";                                            # a
-RAWSTATS="$WORKDIR/01_rawstats/";                                          # b
-POLISHED="$WORKDIR/02_polished/";                                          # c
-TRIMMEDSTATS="$WORKDIR/03_trimmedstats/";                                  # d
-SHOVILL="$WORKDIR/04_shovill/";                                            # e
-QUAST="$WORKDIR/05_quast_analysis/";                                       # f
-QUASTparse="$WORKDIR/REPORTING/";                                          # g
-MLST="$WORKDIR/06_mlst/";                                                  # h
-MLSTparse="$WORKDIR/REPORTING/";                                           # i
-PROKKA="$WORKDIR/07a_prokka/";											   # j
-TMP="$WORKDIR/TEMP/";                                                      # l
-GENOMES="$WORKDIR/genomes/";											   # m
-LOG="$WORKDIR/LOGS/";                                                      # n
-REPORTING="$WORKDIR/REPORTING/";                                           # r
-ARCHIVE="/mnt/lely_scratch/wbvr006/BACT/2021/";				        			   # q
+WORKDIR="$PWD";                                                                 # w
+RAW_FASTQ="$WORKDIR/RAWREADS/";                                                 # a
+RAWSTATS="$WORKDIR/01_rawstats/";                                               # b
+POLISHED="$WORKDIR/02_polished/";                                               # c
+TRIMMEDSTATS="$WORKDIR/03_trimmedstats/";                                       # d
+SHOVILL="$WORKDIR/04_shovill/";                                                 # e
+QUAST="$WORKDIR/05_quast_analysis/";                                           # f
+QUASTparse="$WORKDIR/REPORTING/";                                               # g
+MLST="$WORKDIR/06_mlst/";                                                       # h
+MLSTparse="$WORKDIR/REPORTING/";                                                # i
+PROKKA="$WORKDIR/07a_prokka/";                                                  # j
+TMP="$WORKDIR/TEMP/";                                                           # l
+ASSEMBLY_DIR="$WORKDIR/genomes/";                                               # m (was GENOMES)
+LOG="$WORKDIR/LOGS/";                                                           # n
+REPORTING="$WORKDIR/REPORTING/";                                                # r
+ARCHIVE="/mnt/lely_scratch/wbvr006/BACT/2021/";                                 # q
 
 GenRep="$REPORTING"/general-report.txt;
 
+# Mappen aanmaken voor de start
+for d in "$RAWSTATS" "$POLISHED" "$TRIMMEDSTATS" "$SHOVILL" "$QUAST" "$TMP" "$ASSEMBLY_DIR" "$LOG" "$REPORTING" "$MLST" "$PROKKA"; do
+    mkdir -p "$d"
+done
+
 echo "This wrapper is only suitable for MiSeq Raw data!!!";
 echo "If raw data is from GenomeScan use the other wrapper";
-echo "If data from a unknown source just ask around which wrapper to use";
-
 
 ## file containing the sample names
 SAMPLEFILE=samples.txt;
 
-echo -e "list of all sampleNames\n\n\n";
+if [ ! -f "$SAMPLEFILE" ]; then
+    echo "Error: $SAMPLEFILE niet gevonden!";
+    exit 1
+fi
 
+echo -e "list of all sampleNames\n\n\n";
 cat "$SAMPLEFILE"; 
 
-echo "if the sampleNames are NOT correct, ie punctuation, correct de renaming script lines! and start all over!!!!";
-
 samplecnt=$(cat "$SAMPLEFILE" | wc -l);
-
 echo -e "Current analysis project consists of $samplecnt samples\n" > "$GenRep";
 
+# Functie voor foutcontrole
+check_status() {
+    if [ $? -ne 0 ]; then
+        echo "Error: $1 failed. Check logs for details."
+        exit 1
+    fi
+}
 
-filecnt=$(ls ./RAWREADS/*R1* | wc -l)
-
+filecnt=$(ls ./RAWREADS/*R1* 2>/dev/null | wc -l)
 DIR="RAWREADS/"
+
 if [ -d "$DIR" ] && [ "$filecnt" -gt 0 ]; then
-  ### Take action if $DIR exists ###
-  echo "directory is present"
+  echo "Directory is present and contains files. Starting pipeline..."
 
-# go to the root of the project
+# 00 Structure (voor de zekerheid, hoewel mappen hierboven al gemaakt worden)
+#./00_structure.sh -w "$WORKDIR" -a "$RAW_FASTQ" -b "$RAWSTATS" -c "$POLISHED" -d "$TRIMMEDSTATS" -e "$SHOVILL" -f "$QUAST" -g "$QUASTparse" -l "$TMP" -n "$LOG" -m "$ASSEMBLY_DIR"
+check_status "00_structure.sh"
 
-# sets most of the parameters used for the whoel pipeline
-#./00_structure.sh -w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -c $POLISHED -d $TRIMMEDSTATS -e $SHOVILL -f $QUAST -g $QUASTparse -l $TMP -n $LOG -m $GENOMES; 
+# 01 QC Raw reads
+#./01_fastqc.sh -w "$WORKDIR" -a "$RAW_FASTQ" -b "$RAWSTATS" -r "$REPORTING" -q "$ARCHIVE"
+check_status "01_fastqc.sh"
 
-# qc of the raw sequencing reads 
-#./01_fastqc.sh -w $WORKDIR -a $RAW_FASTQ -b $RAWSTATS -r $REPORTING -q $ARCHIVE
+# 02 Trimming / Polishing (Nu met expliciete paden voor de zekerheid)
+#./02_polishdata.sh -w "$WORKDIR" -a "$RAW_FASTQ" -c "$POLISHED" -l "$TMP" -n "$LOG" -r "$REPORTING" -p "$SAMPLEFILE"
+check_status "02_polishdata.sh"
 
-# will trim artefacts from the raw reads
-#./02_polishdata.sh
+# 03 QC Polished reads
+#./03_fastqc.sh -w "$WORKDIR" -c "$POLISHED" -d "$TRIMMEDSTATS" -r "$REPORTING" -q "$ARCHIVE"
+check_status "03_fastqc.sh"
 
-# qc of the polished rawreads
-#./03_fastqc.sh -w $WORKDIR -c $POLISHED -d $TRIMMEDSTATS -r $REPORTING -q $ARCHIVE
+# 04 Assembly: SHOVILL
+#./04_shovill.sh -w "$WORKDIR" -c "$POLISHED" -e "$SHOVILL" -y "$ASSEMBLER" -z "$CONTIGLENGTH" -r "$REPORTING" -m "$ASSEMBLY_DIR" -q "$ARCHIVE"
+check_status "04_shovill.sh"
 
-# assemble the genomes from the individual bacterial isolates
-#./04_shovill.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -y $ASSEMBLER -z $CONTIGLENGTH -r $REPORTING -m $GENOMES -q $ARCHIVE
+# 05 QC Assembly: QUAST
+#./05_quast.sh -w "$WORKDIR" -c "$POLISHED" -e "$SHOVILL" -f "$QUAST" -r "$REPORTING" -m "$ASSEMBLY_DIR" -q "$ARCHIVE"
+check_status "05_quast.sh"
 
-# qc of the assmbld genomes
-#./05_quast.sh -w $WORKDIR -c $POLISHED -e $SHOVILL -f $QUAST -r $REPORTING -m $GENOMES -q $ARCHIVE
-
-## QC of the assembled genome, it checks if it's complete. Input will only be the assembled genome
+# 06 & 07 Completion checks
 #./06_busco.sh
-
-## QC of the assembled genome, it checks if it's complete. Input will only be the assembled genome
 #./07_checkm2.sh
 
-##### ncbi-amrfinderplus
-
-./10_amfinderplus.sh
-
-
-##### DTU scripts
-
-# determine the genome size and teh species of the sample output ni the REPORTING directory https://bitbucket.org/genomicepidemiology/kmerfinder/src/master/
+# 10 AMR & Species identification
+#./10_amfinderplus.sh
 #./11_kmerfinder.sh
+./12_resfinder.sh
 
-# analyse reads/contigs for presents of AMR genes with corresponing databases https://bitbucket.org/genomicepidemiology/resfinder/src/master/
-#./12_resfinder.sh
+# Optionele DTU Tools (staan uitgevinkt zoals in je origineel)
+# ./13_virulencefinder.sh
+# ./14_plasmidfinder.sh
+# ./15_spatyper.sh
+# ./16_spifinder.sh
+# ./17_sccmec.sh
+# ./18_salmonella-serotyper.sh
+# ./19_genomad.sh
 
-# identifies virulence genes https://bitbucket.org/genomicepidemiology/virulencefinder/src/master/
-#./13_virulencefinder.sh
-
-# plasmidfinder with corresponding database https://bitbucket.org/genomicepidemiology/plasmidfinder/src/master/
-#./14_plasmidfinder.sh
-
-# predicts S.aureus spa type with corresponding database https://bitbucket.org/genomicepidemiology/spatyper/src/main/
-#./15_spatyper.sh
-
-# find salmonella pathogen islands with corresponding database https://bitbucket.org/genomicepidemiology/spifinder/src/master/
-#./16_spifinder.sh
-
-# sccmec analysis for MRSA https://bitbucket.org/genomicepidemiology/sccmecfinder/src/master/
-#./17_sccmec.sh
-
-#./18_salmonella-serotyper.sh
-
-# mobile element finder phage/virus finder https://github.com/apcamargo/genomad
-#./19_genomad.sh
-
-
-# mlst analysis input is the assembled genome
+# 60 MLST
 #./60_mlst.sh
+check_status "60_mlst.sh"
 
-## plasmid analysis
-# another plasmid finder with corresponding database
-#./51_platon-plasmid.sh
-# plasmid analysis and draw maps from analysed data
-#./52_plascad.sh
-# mob_suite analysis mob_typer & mob_recon
-#./53_mobsuite.sh
+# Optionele Plasmid/Annotatie Tools
+# ./51_platon-plasmid.sh
+# ./52_plascad.sh
+# ./53_mobsuite.sh
+# ./70_prokka.sh
+# ./81_mashtree.sh
 
-## anotatie draft genomes
-#./70_prokka.sh
+# 90 Taxonomic indication
+#./90_sendsketch.sh -w "$WORKDIR" -m "$ASSEMBLY_DIR" -l "$TMP" -n "$LOG"
+check_status "90_sendsketch.sh"
 
-## fast simple clustering
-#./81_mashtree.sh
+# 99 Reporting
+#./99_reporting.sh
+# ./versions.sh
 
-## very fast taxonomic indication of isolate
-#./90_sendsketch.sh -w $WORKDIR -m $GENOMES -l $TMP -n $LOG
-
-##### optional scripts will run seperate and/or within the complete pipeline at any given moment
-./99_reporting.sh
-# all versions of the software used within the whole pipeline are reported in a file within the folder $REPORTING
-#./versions.sh
-
-
-
-################################################################################
-
-# LATEN STAAN AMRFINDER ZET ALLE FILES HIER NEER EN DIT LOOPT BIJ ELK GEBRUIK OP!
+# Opschonen tijdelijke AMRfinder bestanden
 rm -rf /tmp/amrfinder*.*;
 
-
-### standard project directories
-
+echo "Pipeline afgerond!"
 
 else
-  ###  Control will jump here if $DIR does NOT exists ###
-  echo "Error: ${DIR} can't found or files aren't present in the directory ${DIR}. Scripts can not continue."
+  echo "Error: ${DIR} niet gevonden of geen R1 bestanden aanwezig. Script gestopt."
   exit 1
 fi
