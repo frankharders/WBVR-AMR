@@ -1,193 +1,123 @@
 #!/bin/bash
 
-##  activate the environment for this downstream analysis
-eval "$(conda shell.bash hook)";
-conda activate amr-QC;
-
-cnt=$(cat samples.txt | wc -l);
+## activate the environment for this downstream analysis
+eval "$(conda shell.bash hook)"
+conda activate amr-QC
 
 while getopts "w:c:e:f:r:m:" opt; do
   case $opt in
      w)
-      echo "-w was triggered! $OPTARG"
-      WORKDIR="`echo $(readlink -m $OPTARG)`"
-      echo $WORKDIR
+      WORKDIR="$(readlink -m $OPTARG)"
+      echo "-w WORKDIR=$WORKDIR"
       ;;
-     a)
-      echo "-a was triggered! $OPTARG"
-      RAW_FASTQ="`echo $(readlink -m $OPTARG)`"
-      echo $RAW_FASTQ
+     c)
+      POLISHED="$(readlink -m $OPTARG)"
+      echo "-c POLISHED=$POLISHED"
       ;;
-     b)
-      echo "-b was triggered! $OPTARG"
-      RAWSTATS="`echo $(readlink -m $OPTARG)`"
-      echo $RAWSTATS
+     e)
+      SHOVILL="$(readlink -m $OPTARG)"
+      echo "-e SHOVILL=$SHOVILL"
       ;;
-	 c)
-      echo "-c was triggered! $OPTARG"
-      POLISHED="`echo $(readlink -m $OPTARG)`"
-      echo $POLISHED
-      ;;
-	 d)
-      echo "-d was triggered! $OPTARG"
-      TRIMMEDSTATS="`echo $(readlink -m $OPTARG)`"
-      echo $TRIMMEDSTATS
-      ;;
-	 e)
-      echo "-e was triggered! $OPTARG"
-      SHOVILL="`echo $(readlink -m $OPTARG)`"
-      echo $SHOVILL
-      ;;
-	 f)
-      echo "-f was triggered! $OPTARG"
-      QUAST="`echo $(readlink -m $OPTARG)`"
-      echo $QUAST
-      ;;
-	 g)
-      echo "-g was triggered! $OPTARG"
-      QUASTparse="`echo $(readlink -m $OPTARG)`"
-      echo $QUASTparse
-      ;;
-     h)
-      echo "-h was triggered! $OPTARG"
-      MLST="`echo $(readlink -m $OPTARG)`"
-      echo $MLST
-      ;;
-     i)
-      echo "-i was triggered! $OPTARG"
-      MLSTparse="`echo $(readlink -m $OPTARG)`"
-      echo $MLSTparse
-      ;;	  
-	 j)
-      echo "-j was triggered! $OPTARG"
-      ABRICATE="`echo $(readlink -m $OPTARG)`"
-      echo $ABRICATE
-      ;;
-     k)
-      echo "-k was triggered! $OPTARG"
-      ABRICATEparse="`echo $(readlink -m $OPTARG)`"
-      echo $ABRICATEparse
-      ;;	  
-	 l)
-      echo "-l was triggered! $OPTARG"
-      TMP="`echo $(readlink -m $OPTARG)`"
-      echo $TMP
-      ;;
-	 n)
-      echo "-n was triggered! $OPTARG"
-      LOG="`echo $(readlink -m $OPTARG)`"
-      echo $LOG
-      ;;
-	 m)
-      echo "-n was triggered! $OPTARG"
-      GENOMES="`echo $(readlink -m $OPTARG)`"
-      echo $GENOMES
+     f)
+      QUAST="$(readlink -m $OPTARG)"
+      echo "-f QUAST=$QUAST"
       ;;
      r)
-      echo "-r was triggered! $OPTARG"
-      REPORTING="`echo $(readlink -m $OPTARG)`"
-      echo $REPORTING
+      REPORTING="$(readlink -m $OPTARG)"
+      echo "-r REPORTING=$REPORTING"
       ;;
-	 y)
-      echo "-y was triggered! $OPTARG"
-      ASSEMBLER=$OPTARG
-      echo $ASSEMBLER
-      ;;
-     z)
-      echo "-r was triggered! $OPTARG"
-      CONTIGLENGTH=$OPTARG
-      echo $CONTIGLENGTH
+     m)
+      GENOMES="$(readlink -m $OPTARG)"
+      echo "-m GENOMES=$GENOMES"
       ;;
     \?)
-      echo "-i for the folder containing fastq files, -o for output folder: -$OPTARG" >&2
+      echo "Unknown option: -$OPTARG" >&2
       ;;
-
   esac
 done
 
-if [ "x" == "x$WORKDIR" ] || [ "x" == "x$POLISHED" ] || [ "x" == "x$SHOVILL" ] || [ "x" == "x$QUAST" ] || [ "x" == "x$REPORTING" ] ; then
-    echo "-w $WORKDIR -c $POLISHED -e $SHOVILL -f $QUAST -r $REPORTING"
-    echo "-w, -c, -e, -f, -r [options] are required"
+if [ "x" == "x$WORKDIR" ] || [ "x" == "x$POLISHED" ] || [ "x" == "x$SHOVILL" ] || [ "x" == "x$QUAST" ] || [ "x" == "x$REPORTING" ]; then
+    echo "ERROR: -w, -c, -e, -f, -r are required"
+    echo "Usage: $0 -w WORKDIR -c POLISHED -e SHOVILL -f QUAST -r REPORTING [-m GENOMES]"
     exit 1
 fi
 
 ## reporting
-GenRep="$REPORTING"/general-report.txt;
+GenRep="$REPORTING/general-report.txt"
+today=$(date +%Y%m%d)
+METRICS="$REPORTING/${today}-assemblymetrics.tab"
 
-# (temp) variables
-today=$(date +%Y%m%d);
-METRICS=./REPORTING/"$today"-assemblymetrics.tab;
+FASTAarchive=/mnt/lely_archive/wbvr006/2021/assembled-genomes-2021/
 
-FASTAarchive=/mnt/lely_archive/wbvr006/2021/assembled-genomes-2021/;
+THREADS=24
 
+echo -e "#sample\tContigs>500bp\tLargestContig\tTotalLength\tN50" > "$METRICS"
 
+cnt=$(wc -l < samples.txt)
 
-echo -e "#sample\tContigs>500bp\tLargestContig\tTotalLength\tN50" > "$METRICS";
+while read -r SAMPLE; do
 
-while read SAMPLE; do 
+    echo -e "\n==> Processing sample: $SAMPLE ($cnt remaining)"
 
-	echo $SAMPLE;
-	
-OUTPUTdir=$SHOVILL/$SAMPLE/;
-R1=$POLISHED/$SAMPLE/$SAMPLE'_R1.QTR.adapter.correct.fq.gz';
-R2=$POLISHED/$SAMPLE/$SAMPLE'_R2.QTR.adapter.correct.fq.gz';
+    R1="$POLISHED/$SAMPLE/${SAMPLE}_R1.QTR.adapter.correct.fq.gz"
+    R2="$POLISHED/$SAMPLE/${SAMPLE}_R2.QTR.adapter.correct.fq.gz"
+    FASTAout="$SHOVILL/$SAMPLE/$SAMPLE.fa"
 
-THREADS=24;
+    # Run quast into /tmp (local disk) to avoid NFS stalling
+    TMP_QUAST="/tmp/quast_${SAMPLE}_$$"
+    rm -rf "$TMP_QUAST"
 
+    echo "==> Running quast for $SAMPLE (output to /tmp first)..."
+    quast "$FASTAout" -1 "$R1" -2 "$R2" \
+        --threads "$THREADS" \
+        -o "$TMP_QUAST" \
+        --strict-NA \
+        || { echo "ERROR: quast failed for $SAMPLE"; let cnt--; continue; }
 
-FASTAout=$OUTPUTdir/$SAMPLE'.fa';
+    # rsync results from /tmp to NFS target - file-by-file, no directory lock issues
+    echo "==> rsyncing quast results for $SAMPLE to NFS..."
+    mkdir -p "$QUAST/$SAMPLE"
+    rsync -a "$TMP_QUAST/" "$QUAST/$SAMPLE/" \
+        || { echo "ERROR: rsync failed for $SAMPLE"; let cnt--; continue; }
 
-quast $FASTAout -1 $R1 -2 $R2 --threads $THREADS -o $QUAST/$SAMPLE --strict-NA;
+    # Clean up /tmp
+    rm -rf "$TMP_QUAST"
 
+    # Copy named report files
+    cat "$QUAST/$SAMPLE/report.pdf" > "$QUAST/$SAMPLE/$SAMPLE.report.pdf"
+    cat "$QUAST/$SAMPLE/report.tsv" > "$QUAST/$SAMPLE/$SAMPLE.report.tsv"
 
-cat $QUAST/$SAMPLE/'report.pdf' > $QUAST/$SAMPLE/$SAMPLE'.report.pdf';
-cat $QUAST/$SAMPLE/'report.tsv' > $QUAST/$SAMPLE/$SAMPLE'.report.tsv';
+    REPORT="$QUAST/$SAMPLE/$SAMPLE.report.tsv"
 
+    # Parse metrics
+    No=$(grep -P "# contigs\t"  "$REPORT" | cut -f2 -d$'\t')
+    LC=$(grep 'Largest contig'  "$REPORT" | cut -f2 -d$'\t')
+    TL=$(grep -P "Total length\t" "$REPORT" | cut -f2 -d$'\t')
+    N50=$(grep 'N50'            "$REPORT" | cut -f2 -d$'\t')
 
-REPORT=$QUAST/$SAMPLE/$SAMPLE'.report.tsv';
+    echo -e "  Contigs=$No  LargestContig=$LC  TotalLength=$TL  N50=$N50"
 
-echo "$SAMPLE";
-cat "$REPORT" | grep -P "# contigs\t";
+    # Copy genome to destinations
+    if [ -n "$GENOMES" ]; then
+        rsync -a "$FASTAout" "$GENOMES/" \
+            || echo "WARNING: rsync to GENOMES failed for $SAMPLE"
+    fi
 
-No=$(cat $REPORT | grep -P "# contigs\t" | cut -f2 -d$'\t');
-LC=$(cat $REPORT | grep 'Largest contig' | cut -f2 -d$'\t');
-TL=$(cat $REPORT | grep -P "Total length\t" | cut -f2 -d$'\t');
-N50=$(cat $REPORT | grep 'N50' | cut -f2 -d$'\t');
+    rsync -a "$FASTAout" "$FASTAarchive/" \
+        || echo "WARNING: rsync to FASTAarchive failed for $SAMPLE"
 
+    echo -e "$SAMPLE\t$No\t$LC\t$TL\t$N50" >> "$METRICS"
 
-cp "$FASTAout" "$GENOMES";
-cp "$FASTAout" "$FASTAarchive";
+    let cnt--
+    echo "==> $cnt samples to go"
 
-
-## test every value
-#echo -e "sample=$SAMPLE";
-#echo -e "No=$No";
-#echo -e "LC=$LC";
-#echo -e "TL=$TL";
-#echo -e "N50=$N50";
-
-
-#sample contigs>500bp largestContig N50
-echo -e "$SAMPLE\t$No\t$LC\t$TL\t$N50" >> "$METRICS";
-
-
-	let cnt--;	
-	echo -e "$cnt samples to go!";
-	echo "NEXT";
-				
 done < samples.txt
 
-echo "quast analysis is done for all assemblies for all samples";
-echo -e "output files for downstream processing can be found in the directory $QUAST";
+echo -e "\n==> Quast analysis done for all samples"
+echo -e "Output: $QUAST"
 
-quastCnt=$(ls $QUAST/*/report.pdf | wc l);
+quastCnt=$(ls "$QUAST"/*/report.pdf 2>/dev/null | wc -l)
+echo -e "\nQUAST\nfrom $quastCnt samples a quast & icarus report is constructed\n" >> "$GenRep"
 
-echo -e "\nQUAST\nfrom $quastCnt samples a quast & icarus report is constructed\n" >> "$GenRep"; 		
-
-
-echo "Quast script is finished";
-
-exit 1
-
-
-
+echo "==> Quast script finished"
+exit 0
