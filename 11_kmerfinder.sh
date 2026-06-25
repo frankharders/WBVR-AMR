@@ -73,8 +73,8 @@ while [ $count0 -le $countW ]; do
 
     # Parsing resultaten (Top score uit kolom 19)
     if [ -f "$DIRout/results.txt" ] && [ "$(wc -l < "$DIRout/results.txt")" -gt 1 ]; then
-        species=$(sed '1d' "$DIRout/results.txt" | sort -k7,7nr | head -n1 | cut -f19 -d$'\t')
-        [ -z "$species" ] && species=$(sed '1d' "$DIRout/results.txt" | sort -k7,7nr | head -n1 | cut -f2 -d$'\t')
+        species=$(sed '1d' "$DIRout/results.txt" | sort -k6,6nr | head -n1 | cut -f19 -d$'\t')
+        [ -z "$species" ] && species=$(sed '1d' "$DIRout/results.txt" | sort -k6,6nr | head -n1 | cut -f2 -d$'\t')
 
         echo -e "$SAMPLE\t$species" >> "$speciesLog"
         log "Resultaat: $species"
